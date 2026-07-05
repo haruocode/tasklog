@@ -1,0 +1,23 @@
+{
+  "name": "@tasklog/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "cf-typegen": "wrangler types",
+    "migrate:local": "wrangler d1 migrations apply tasklog --local",
+    "migrate:remote": "wrangler d1 migrations apply tasklog --remote"
+  },
+  "dependencies": {
+    "@tasklog/db": "workspace:*",
+    "@tasklog/shared": "workspace:*",
+    "hono": "^4.6.15"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "wrangler": "^4.107.0"
+  }
+}

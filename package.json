@@ -1,0 +1,21 @@
+{
+  "name": "tasklog",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @tasklog/api dev",
+    "build": "pnpm --filter @tasklog/web build",
+    "deploy": "pnpm --filter @tasklog/web build && pnpm --filter @tasklog/api deploy",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @tasklog/db generate",
+    "db:migrate:local": "pnpm --filter @tasklog/db migrate:local"
+  }
+}
