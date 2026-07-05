@@ -40,4 +40,26 @@
 
 - Cloudflare Workers + D1 上で動作し、自前 DB にユーザーテーブルを持てる
 - Clerk は外部依存が強く、Supabase Auth は Cloudflare 前提から外れるため不採用
-- メール/パスワードから開始し、必要になれば OAuth を追加する
+
+## 2026-07-06: デプロイ構成・認証プロバイダ・ID 方式を確定
+
+### 1 Worker で web + API を配信
+
+- `apps/web`（React ビルド成果物）と `apps/api`（Hono）を **単一の Worker** から配信する
+- 静的アセットは Workers Assets、API は同一 Worker 内の Hono ルートで処理
+- 別オリジンにならないため CORS が不要になり、運用もシンプル
+
+### 認証は Google OAuth のみ
+
+- Better Auth の Google Provider のみを有効化する
+- メール/パスワードは実装しない（必要になれば後から追加）
+- 必要なシークレット: `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`、`BETTER_AUTH_SECRET` / `BETTER_AUTH_URL`
+
+### 主キーの ID 方式は UUIDv7（text）
+
+- すべてのレコード主キー（`users.id`, `workspaces.id`, `issues.id` など）は **UUIDv7 を `text` 型** で保持
+- 理由:
+  - Workers（JS）側で挿入前に生成でき、DB 採番に依存しない
+  - 時刻順にソート可能で、SQLite の B-tree インデックス局所性が良い
+  - 標準規格でツールの追従が安心
+- **表示用キー**（`TASK-1` 等）の元になる `issues.issue_number` は別物で、**プロジェクトごとの連番 integer** を維持する
