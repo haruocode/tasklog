@@ -57,48 +57,54 @@ MVP がサポートすべきもの:
 - 課金
 - 多言語対応
 
-## 推奨技術スタック
+## 確定技術スタック
 
-強い理由がない限り、以下のスタックを使用してください。
+このプロジェクトは **Cloudflare 前提** で構築します。強い理由がない限り、以下のスタックを使用してください。決定の背景は `docs/decisions.md` を参照。
 
 ### フロントエンド
 
 - React
 - TypeScript
 - Vite
-- TanStack Router または React Router
+- TanStack Router
 - TanStack Query
-- クライアント状態が必要な場合は Zustand
-- shadcn/ui または他のシンプルなコンポーネントシステム
+- Zustand（UI 状態が必要な場合）
+- shadcn/ui
 - Tailwind CSS
+- Zod（バリデーション、フロント/バック共有）
 
 ### バックエンド
 
 - Hono
 - TypeScript
-- Cloudflare Workers または Node 互換ランタイム
+- Cloudflare Workers
 
 ### データベース
 
-- PostgreSQL
+- Cloudflare D1（SQLite）
 - Drizzle ORM
 
-推奨のマネージド DB:
+割り切りとして受け入れる制約:
 
-- Supabase Postgres
-- Neon Postgres
-
-リレーショナルモデリング・検索・将来のマイグレーションが難しくなる場合、初期バージョンで SQLite/D1 を選ばないでください。
+- 大量同時書き込みには弱い（小チーム用途では許容）
+- Postgres 固有機能（jsonb・配列・強力な全文検索）は使わない
+- 検索は SQLite の `LIKE` / 必要に応じて FTS5 で対応
+- 将来 Postgres へ移行する場合は相応の手間がかかることを認識しておく
 
 ### 認証
 
-以下のいずれかを推奨:
+- Better Auth（Cloudflare Workers + D1 上で動作、自前 DB にテーブルを持つ）
 
-- Supabase Auth
-- Better Auth
-- Clerk
+Clerk / Supabase Auth は Cloudflare 前提から外れる、または外部依存が強いため不採用。
 
-初期バージョンでは、認証はシンプルに保ちます。
+初期バージョンでは、認証はシンプルに保ちます（メール/パスワードから開始）。
+
+### デプロイ / ツール
+
+- Cloudflare Workers（API）
+- Cloudflare Workers 静的アセット または Pages（web）
+- wrangler（ローカル開発・デプロイ）
+- pnpm モノレポ
 
 ## リポジトリ構成
 
@@ -578,17 +584,16 @@ COMMENT_NOT_FOUND
 
 シークレットは絶対にコミットしないでください。
 
-想定される変数の例:
+Cloudflare の秘密情報は `wrangler secret` で管理し、D1 のバインディングは `wrangler.jsonc`（`d1_databases`）で設定します。ローカルは `.dev.vars` を使用します。
+
+想定される変数/シークレットの例:
 
 ```txt
-DATABASE_URL=
-AUTH_SECRET=
-SUPABASE_URL=
-SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=
 ```
 
-実際に使用する変数のみを含めてください。
+D1 は `wrangler.jsonc` のバインディング（例: `DB`）経由でアクセスするため、接続文字列（`DATABASE_URL`）は不要です。実際に使用する変数のみを含めてください。
 
 ## ドキュメント
 
@@ -609,13 +614,13 @@ docs/
 例:
 
 ```md
-# 意思決定: Cloudflare D1 ではなく PostgreSQL を使用する
+# 意思決定: Cloudflare D1 を使用する
 
 理由:
 
-- ドメインがリレーショナルである
-- 将来のフィルタリングと検索が容易になる
-- 本番 SaaS へのマイグレーションが容易になる
+- スタックを Cloudflare に統一し、運用とコストを最小化する
+- ドメインは素直なリレーショナルで、SQLite で十分に扱える
+- 小チーム用途では D1 の制約が問題になりにくい
 ```
 
 ## 開発の優先順位
