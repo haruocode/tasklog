@@ -12,6 +12,7 @@
     "generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "@tasklog/shared": "workspace:*",
     "drizzle-orm": "^0.38.3",
     "uuidv7": "^1.0.2"
   },
