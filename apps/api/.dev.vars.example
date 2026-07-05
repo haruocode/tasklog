@@ -1,0 +1,12 @@
+# Copy to `.dev.vars` (gitignored) for local development.
+# In production set these with `wrangler secret put <NAME>`.
+
+# Base URL of the running app. For local dev use the wrangler dev origin.
+BETTER_AUTH_URL="http://localhost:8787"
+
+# Random secret for signing sessions. Generate with: openssl rand -base64 32
+BETTER_AUTH_SECRET=""
+
+# Google OAuth client (see docs/auth.md for how to create one).
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""

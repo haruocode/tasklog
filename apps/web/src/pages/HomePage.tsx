@@ -1,11 +1,49 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ApiSuccess, HealthResponse } from "@tasklog/shared";
+import { authClient } from "../lib/auth-client";
 
 async function fetchHealth(): Promise<HealthResponse> {
   const res = await fetch("/api/health");
   if (!res.ok) throw new Error("health check failed");
   const json = (await res.json()) as ApiSuccess<HealthResponse>;
   return json.data;
+}
+
+function AuthPanel() {
+  const { data: session, isPending } = authClient.useSession();
+
+  return (
+    <section className="rounded-lg border border-gray-200 p-4">
+      <h2 className="mb-3 text-sm font-medium text-gray-500">アカウント</h2>
+      {isPending ? (
+        <p className="text-gray-400">確認中…</p>
+      ) : session ? (
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="truncate font-medium">{session.user.name}</p>
+            <p className="truncate text-sm text-gray-500">
+              {session.user.email}
+            </p>
+          </div>
+          <button
+            onClick={() => authClient.signOut()}
+            className="shrink-0 rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
+          >
+            ログアウト
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() =>
+            authClient.signIn.social({ provider: "google", callbackURL: "/" })
+          }
+          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+        >
+          Google でログイン
+        </button>
+      )}
+    </section>
+  );
 }
 
 export function HomePage() {
@@ -22,6 +60,8 @@ export function HomePage() {
           軽量チケット管理システム — 開発中の足場
         </p>
       </div>
+
+      <AuthPanel />
 
       <section className="rounded-lg border border-gray-200 p-4">
         <h2 className="mb-2 text-sm font-medium text-gray-500">

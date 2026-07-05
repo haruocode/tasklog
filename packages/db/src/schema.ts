@@ -32,13 +32,64 @@ const updatedAt = () =>
     .$defaultFn(() => new Date())
     .$onUpdate(() => new Date());
 
-// NOTE: `users` mirrors the AGENTS.md domain model. When Better Auth is added
-// (auth step), its user/session/account tables are reconciled with this table.
+// `users` is the canonical user table AND Better Auth's `user` model (mapped via
+// the drizzle adapter). Fields follow Better Auth's required user schema
+// (emailVerified, image); domain FKs below reference this table.
 export const users = sqliteTable("users", {
   id: id(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  avatarUrl: text("avatar_url"),
+  emailVerified: integer("email_verified", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  image: text("image"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+// --- Better Auth tables (mapped as session/account/verification) ---------------
+// Column set matches Better Auth's required core schema.
+
+export const sessions = sqliteTable("sessions", {
+  id: id(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const accounts = sqliteTable("accounts", {
+  id: id(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  accessTokenExpiresAt: integer("access_token_expires_at", {
+    mode: "timestamp",
+  }),
+  refreshTokenExpiresAt: integer("refresh_token_expires_at", {
+    mode: "timestamp",
+  }),
+  scope: text("scope"),
+  idToken: text("id_token"),
+  password: text("password"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const verifications = sqliteTable("verifications", {
+  id: id(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
