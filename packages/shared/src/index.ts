@@ -30,3 +30,21 @@ export const healthResponseSchema = z.object({
   time: z.string(),
 });
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
+
+// --- Workspaces ----------------------------------------------------------------
+
+export const createWorkspaceSchema = z.object({
+  name: z.string().trim().min(1, "ワークスペース名は必須です").max(100),
+});
+export type CreateWorkspaceInput = z.infer<typeof createWorkspaceSchema>;
+
+// A workspace as returned by the API, including the caller's role in it.
+// Timestamps are ISO strings (JSON-serialized Dates).
+export type Workspace = {
+  id: string;
+  name: string;
+  ownerId: string;
+  role: WorkspaceRole;
+  createdAt: string;
+  updatedAt: string;
+};

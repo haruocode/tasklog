@@ -5,6 +5,7 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 import { HomePage } from "./pages/HomePage";
+import { WorkspacesPage } from "./pages/WorkspacesPage";
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -16,7 +17,13 @@ const indexRoute = createRoute({
   component: HomePage,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute]);
+const workspacesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces",
+  component: WorkspacesPage,
+});
+
+const routeTree = rootRoute.addChildren([indexRoute, workspacesRoute]);
 
 export const router = createRouter({ routeTree });
 

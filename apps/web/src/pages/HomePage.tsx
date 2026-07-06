@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import type { ApiSuccess, HealthResponse } from "@tasklog/shared";
 import { authClient } from "../lib/auth-client";
 
@@ -25,12 +26,20 @@ function AuthPanel() {
               {session.user.email}
             </p>
           </div>
-          <button
-            onClick={() => authClient.signOut()}
-            className="shrink-0 rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
-          >
-            ログアウト
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              to="/workspaces"
+              className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700"
+            >
+              ワークスペースへ
+            </Link>
+            <button
+              onClick={() => authClient.signOut()}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
+            >
+              ログアウト
+            </button>
+          </div>
         </div>
       ) : (
         <button
