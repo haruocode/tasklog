@@ -48,3 +48,32 @@ export type Workspace = {
   createdAt: string;
   updatedAt: string;
 };
+
+// --- Projects ------------------------------------------------------------------
+
+// Key must start with a letter, then uppercase letters/digits, 2–10 chars total.
+// Used to build issue keys like TASK-1.
+export const projectKeySchema = z
+  .string()
+  .trim()
+  .regex(
+    /^[A-Z][A-Z0-9]{1,9}$/,
+    "キーは英大文字で始まる2〜10文字の英大文字・数字です",
+  );
+
+export const createProjectSchema = z.object({
+  name: z.string().trim().min(1, "プロジェクト名は必須です").max(100),
+  key: projectKeySchema,
+  description: z.string().trim().max(500).optional(),
+});
+export type CreateProjectInput = z.infer<typeof createProjectSchema>;
+
+export type Project = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  key: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+};

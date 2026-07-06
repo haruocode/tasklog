@@ -1,28 +1,31 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
-import { createWorkspaceSchema } from "@tasklog/shared";
+import { Link, useParams } from "@tanstack/react-router";
+import { createProjectSchema } from "@tasklog/shared";
 import { authClient } from "../lib/auth-client";
-import { ApiRequestError, createWorkspace, listWorkspaces } from "../lib/api";
+import { ApiRequestError, createProject, listProjects } from "../lib/api";
 
-function CreateWorkspaceForm() {
+function CreateProjectForm({ workspaceId }: { workspaceId: string }) {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
+  const [key, setKey] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: createWorkspace,
+    mutationFn: (input: { name: string; key: string }) =>
+      createProject(workspaceId, input),
     onSuccess: () => {
       setName("");
+      setKey("");
       setError(null);
-      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      queryClient.invalidateQueries({ queryKey: ["projects", workspaceId] });
     },
     onError: (e) => setError(e instanceof Error ? e.message : "作成に失敗しました"),
   });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = createWorkspaceSchema.safeParse({ name });
+    const parsed = createProjectSchema.safeParse({ name, key });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "入力が不正です");
       return;
@@ -36,8 +39,14 @@ function CreateWorkspaceForm() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="新しいワークスペース名"
+          placeholder="プロジェクト名"
           className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+        />
+        <input
+          value={key}
+          onChange={(e) => setKey(e.target.value.toUpperCase())}
+          placeholder="キー (例: TASK)"
+          className="w-32 rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"
         />
         <button
           type="submit"
@@ -52,13 +61,14 @@ function CreateWorkspaceForm() {
   );
 }
 
-export function WorkspacesPage() {
+export function ProjectsPage() {
+  const { workspaceId } = useParams({ strict: false });
   const { data: session, isPending } = authClient.useSession();
 
-  const workspacesQuery = useQuery({
-    queryKey: ["workspaces"],
-    queryFn: listWorkspaces,
-    enabled: !!session,
+  const projectsQuery = useQuery({
+    queryKey: ["projects", workspaceId],
+    queryFn: () => listProjects(workspaceId!),
+    enabled: !!session && !!workspaceId,
   });
 
   if (isPending) {
@@ -68,7 +78,7 @@ export function WorkspacesPage() {
   if (!session) {
     return (
       <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-4 p-8">
-        <p className="text-gray-600">ワークスペースを見るにはログインが必要です。</p>
+        <p className="text-gray-600">ログインが必要です。</p>
         <Link to="/" className="text-sm text-blue-600 underline">
           トップへ戻ってログイン
         </Link>
@@ -79,40 +89,38 @@ export function WorkspacesPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-6 p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">ワークスペース</h1>
-        <Link to="/" className="text-sm text-gray-500 hover:underline">
-          トップ
+        <h1 className="text-2xl font-bold tracking-tight">プロジェクト</h1>
+        <Link to="/workspaces" className="text-sm text-gray-500 hover:underline">
+          ワークスペース一覧
         </Link>
       </div>
 
-      <CreateWorkspaceForm />
+      <CreateProjectForm workspaceId={workspaceId!} />
 
       <section className="flex flex-col gap-2">
-        {workspacesQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
-        {workspacesQuery.isError && (
+        {projectsQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
+        {projectsQuery.isError && (
           <p className="text-red-600">
-            {workspacesQuery.error instanceof ApiRequestError
-              ? workspacesQuery.error.message
+            {projectsQuery.error instanceof ApiRequestError
+              ? projectsQuery.error.message
               : "読み込みに失敗しました"}
           </p>
         )}
-        {workspacesQuery.data?.length === 0 && (
+        {projectsQuery.data?.length === 0 && (
           <p className="text-sm text-gray-500">
-            まだワークスペースがありません。上のフォームから作成してください。
+            まだプロジェクトがありません。上のフォームから作成してください。
           </p>
         )}
-        {workspacesQuery.data?.map((ws) => (
-          <Link
-            key={ws.id}
-            to="/workspaces/$workspaceId/projects"
-            params={{ workspaceId: ws.id }}
-            className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 hover:bg-gray-50"
+        {projectsQuery.data?.map((p) => (
+          <div
+            key={p.id}
+            className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3"
           >
-            <span className="font-medium">{ws.name}</span>
-            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-              {ws.role}
+            <span className="font-medium">{p.name}</span>
+            <span className="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-600">
+              {p.key}
             </span>
-          </Link>
+          </div>
         ))}
       </section>
     </main>

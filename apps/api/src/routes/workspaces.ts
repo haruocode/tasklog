@@ -4,10 +4,14 @@ import { createDb, newId, workspaceMembers, workspaces } from "@tasklog/db";
 import { createWorkspaceSchema, type Workspace } from "@tasklog/shared";
 import type { AppEnv } from "../types";
 import { requireAuth } from "../middleware/auth";
+import { projectsRoute } from "./projects";
 
 export const workspacesRoute = new Hono<AppEnv>();
 
 workspacesRoute.use("*", requireAuth);
+
+// Nested resource: /api/workspaces/:workspaceId/projects
+workspacesRoute.route("/:workspaceId/projects", projectsRoute);
 
 // List workspaces the current user is a member of, with their role.
 workspacesRoute.get("/", async (c) => {
