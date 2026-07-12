@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import {
   ISSUE_PRIORITIES,
+  ISSUE_STATUSES,
   ISSUE_TYPES,
   createIssueSchema,
+  type IssueFilters,
   type IssuePriority,
   type IssueType,
 } from "@tasklog/shared";
@@ -86,13 +88,35 @@ function CreateIssueForm({ projectId }: { projectId: string }) {
   );
 }
 
+// "" means "all" for a select filter.
+const ALL = "";
+
 export function IssuesPage() {
   const { projectId } = useParams({ strict: false });
   const { data: session, isPending } = authClient.useSession();
 
+  const [status, setStatus] = useState<IssueFilters["status"] | "">(ALL);
+  const [priority, setPriority] = useState<IssueFilters["priority"] | "">(ALL);
+  const [type, setType] = useState<IssueFilters["type"] | "">(ALL);
+  const [keyword, setKeyword] = useState("");
+  const [debouncedKeyword, setDebouncedKeyword] = useState("");
+
+  // Debounce the keyword so typing doesn't fire a request per keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedKeyword(keyword.trim()), 300);
+    return () => clearTimeout(t);
+  }, [keyword]);
+
+  const filters: IssueFilters = {
+    status: status || undefined,
+    priority: priority || undefined,
+    type: type || undefined,
+    q: debouncedKeyword || undefined,
+  };
+
   const issuesQuery = useQuery({
-    queryKey: ["issues", projectId],
-    queryFn: () => listIssues(projectId!),
+    queryKey: ["issues", projectId, filters],
+    queryFn: () => listIssues(projectId!, filters),
     enabled: !!session && !!projectId,
   });
 
@@ -122,6 +146,51 @@ export function IssuesPage() {
 
       <CreateIssueForm projectId={projectId!} />
 
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          placeholder="タイトルで検索…"
+          className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+        />
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value as typeof status)}
+          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+        >
+          <option value={ALL}>全ステータス</option>
+          {ISSUE_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {STATUS_LABELS[s]}
+            </option>
+          ))}
+        </select>
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value as typeof priority)}
+          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+        >
+          <option value={ALL}>全優先度</option>
+          {ISSUE_PRIORITIES.map((p) => (
+            <option key={p} value={p}>
+              {PRIORITY_LABELS[p]}
+            </option>
+          ))}
+        </select>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as typeof type)}
+          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+        >
+          <option value={ALL}>全種別</option>
+          {ISSUE_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {TYPE_LABELS[t]}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <section className="flex flex-col gap-2">
         {issuesQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
         {issuesQuery.isError && (
@@ -133,7 +202,9 @@ export function IssuesPage() {
         )}
         {issuesQuery.data?.length === 0 && (
           <p className="text-sm text-gray-500">
-            まだイシューがありません。上のフォームから作成してください。
+            {status || priority || type || debouncedKeyword
+              ? "条件に一致するイシューがありません。"
+              : "まだイシューがありません。上のフォームから作成してください。"}
           </p>
         )}
         {issuesQuery.data && issuesQuery.data.length > 0 && (

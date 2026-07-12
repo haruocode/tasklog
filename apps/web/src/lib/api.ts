@@ -8,6 +8,7 @@ import type {
   CreateWorkspaceInput,
   Issue,
   IssueDetail,
+  IssueFilters,
   Project,
   UpdateIssueInput,
   Workspace,
@@ -58,8 +59,15 @@ export const createProject = (workspaceId: string, input: CreateProjectInput) =>
     body: JSON.stringify(input),
   });
 
-export const listIssues = (projectId: string) =>
-  api<Issue[]>(`/api/projects/${projectId}/issues`);
+export const listIssues = (projectId: string, filters: IssueFilters = {}) => {
+  const params = new URLSearchParams();
+  if (filters.status) params.set("status", filters.status);
+  if (filters.priority) params.set("priority", filters.priority);
+  if (filters.type) params.set("type", filters.type);
+  if (filters.q) params.set("q", filters.q);
+  const qs = params.toString();
+  return api<Issue[]>(`/api/projects/${projectId}/issues${qs ? `?${qs}` : ""}`);
+};
 
 export const createIssue = (projectId: string, input: CreateIssueInput) =>
   api<Issue>(`/api/projects/${projectId}/issues`, {

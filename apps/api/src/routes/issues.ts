@@ -1,9 +1,26 @@
 import { Hono } from "hono";
-import { desc, eq, max } from "drizzle-orm";
+import { and, desc, eq, like, max, type SQL } from "drizzle-orm";
 import { createDb, issues, newId } from "@tasklog/db";
-import { createIssueSchema, type Issue } from "@tasklog/shared";
+import {
+  ISSUE_PRIORITIES,
+  ISSUE_STATUSES,
+  ISSUE_TYPES,
+  createIssueSchema,
+  type Issue,
+} from "@tasklog/shared";
 import type { AppEnv } from "../types";
 import { getProjectAccess } from "../lib/authz";
+
+// Returns `value` if it is one of `allowed`, else undefined. Used to ignore
+// unknown filter query params instead of erroring.
+function oneOf<T extends string>(
+  allowed: readonly T[],
+  value: string | undefined,
+): T | undefined {
+  return value && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : undefined;
+}
 
 // Mounted under /api/projects/:projectId/issues (see index.ts).
 export const issuesRoute = new Hono<AppEnv>();
@@ -41,10 +58,21 @@ issuesRoute.get("/", async (c) => {
   const access = await getProjectAccess(db, projectId, user.id);
   if (!access) return c.json(PROJECT_NOT_FOUND, 404);
 
+  // Optional filters; unknown enum values are ignored (see oneOf).
+  const conditions: SQL[] = [eq(issues.projectId, projectId)];
+  const status = oneOf(ISSUE_STATUSES, c.req.query("status"));
+  if (status) conditions.push(eq(issues.status, status));
+  const priority = oneOf(ISSUE_PRIORITIES, c.req.query("priority"));
+  if (priority) conditions.push(eq(issues.priority, priority));
+  const type = oneOf(ISSUE_TYPES, c.req.query("type"));
+  if (type) conditions.push(eq(issues.type, type));
+  const q = c.req.query("q")?.trim();
+  if (q) conditions.push(like(issues.title, `%${q}%`));
+
   const rows = await db
     .select()
     .from(issues)
-    .where(eq(issues.projectId, projectId))
+    .where(and(...conditions))
     .orderBy(desc(issues.issueNumber));
 
   return c.json({ data: rows.map((r) => toIssue(r, access.project.key)) });

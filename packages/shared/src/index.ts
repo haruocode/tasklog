@@ -91,6 +91,15 @@ export const createIssueSchema = z.object({
 });
 export type CreateIssueInput = z.infer<typeof createIssueSchema>;
 
+// Filters for listing issues. All optional; omitted fields are not constrained.
+// `q` is a keyword matched against the issue title.
+export type IssueFilters = {
+  status?: IssueStatus;
+  priority?: IssuePriority;
+  type?: IssueType;
+  q?: string;
+};
+
 // Partial update of an editable issue. All fields optional; at least one
 // required. `description` accepts null to clear it.
 export const updateIssueSchema = z
