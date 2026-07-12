@@ -1,14 +1,107 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import {
   ISSUE_PRIORITIES,
   ISSUE_STATUSES,
+  createCommentSchema,
   type IssueDetail,
   type UpdateIssueInput,
 } from "@tasklog/shared";
 import { authClient } from "../lib/auth-client";
-import { ApiRequestError, getIssue, updateIssue } from "../lib/api";
+import {
+  ApiRequestError,
+  createComment,
+  getIssue,
+  listComments,
+  updateIssue,
+} from "../lib/api";
 import { PRIORITY_LABELS, STATUS_LABELS, TYPE_LABELS } from "../lib/issue-labels";
+
+function CommentsSection({ issueId }: { issueId: string }) {
+  const queryClient = useQueryClient();
+  const [body, setBody] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const commentsQuery = useQuery({
+    queryKey: ["issue-comments", issueId],
+    queryFn: () => listComments(issueId),
+  });
+
+  const mutation = useMutation({
+    mutationFn: (input: { body: string }) => createComment(issueId, input),
+    onSuccess: () => {
+      setBody("");
+      setError(null);
+      queryClient.invalidateQueries({ queryKey: ["issue-comments", issueId] });
+    },
+    onError: (e) => setError(e instanceof Error ? e.message : "投稿に失敗しました"),
+  });
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = createCommentSchema.safeParse({ body });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "入力が不正です");
+      return;
+    }
+    mutation.mutate(parsed.data);
+  };
+
+  return (
+    <section className="flex flex-col gap-4">
+      <h2 className="text-sm font-medium text-gray-500">コメント</h2>
+
+      <div className="flex flex-col gap-3">
+        {commentsQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
+        {commentsQuery.isError && (
+          <p className="text-red-600">
+            {commentsQuery.error instanceof ApiRequestError
+              ? commentsQuery.error.message
+              : "読み込みに失敗しました"}
+          </p>
+        )}
+        {commentsQuery.data?.length === 0 && (
+          <p className="text-sm text-gray-400">まだコメントはありません。</p>
+        )}
+        {commentsQuery.data?.map((comment) => (
+          <div
+            key={comment.id}
+            className="flex flex-col gap-1 rounded-lg border border-gray-200 p-3"
+          >
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-medium">{comment.author.name}</span>
+              <span className="text-xs text-gray-400">
+                {new Date(comment.createdAt).toLocaleString("ja-JP")}
+              </span>
+            </div>
+            <p className="whitespace-pre-wrap text-sm text-gray-900">
+              {comment.body}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <form onSubmit={submit} className="flex flex-col gap-2">
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="コメントを追加…"
+          rows={3}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+        />
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <button
+          type="submit"
+          disabled={mutation.isPending}
+          className="self-end rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+        >
+          {mutation.isPending ? "投稿中…" : "コメント"}
+        </button>
+      </form>
+    </section>
+  );
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -147,6 +240,8 @@ export function IssueDetailPage() {
               <p className="text-sm text-gray-400">説明はありません。</p>
             )}
           </section>
+
+          <CommentsSection issueId={issueQuery.data.id} />
         </article>
       )}
     </main>

@@ -1,6 +1,8 @@
 import type {
   ApiError,
   ApiSuccess,
+  Comment,
+  CreateCommentInput,
   CreateIssueInput,
   CreateProjectInput,
   CreateWorkspaceInput,
@@ -71,5 +73,14 @@ export const getIssue = (issueId: string) =>
 export const updateIssue = (issueId: string, input: UpdateIssueInput) =>
   api<IssueDetail>(`/api/issues/${issueId}`, {
     method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
+export const listComments = (issueId: string) =>
+  api<Comment[]>(`/api/issues/${issueId}/comments`);
+
+export const createComment = (issueId: string, input: CreateCommentInput) =>
+  api<Comment>(`/api/issues/${issueId}/comments`, {
+    method: "POST",
     body: JSON.stringify(input),
   });

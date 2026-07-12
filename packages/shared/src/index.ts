@@ -138,3 +138,20 @@ export type IssueDetail = Issue & {
   reporter: UserSummary;
   assignee: UserSummary | null;
 };
+
+// --- Comments ------------------------------------------------------------------
+
+export const createCommentSchema = z.object({
+  body: z.string().trim().min(1, "コメントを入力してください").max(5000),
+});
+export type CreateCommentInput = z.infer<typeof createCommentSchema>;
+
+// A comment with its author resolved to a user summary.
+export type Comment = {
+  id: string;
+  issueId: string;
+  body: string;
+  author: UserSummary;
+  createdAt: string;
+  updatedAt: string;
+};
