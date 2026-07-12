@@ -7,7 +7,7 @@ import {
   type UserSummary,
 } from "@tasklog/shared";
 import type { AppEnv } from "../types";
-import { getIssueAccess } from "../lib/authz";
+import { getIssueAccess, getMembership } from "../lib/authz";
 import { toIssue } from "./issues";
 
 // Mounted under /api/issues/:issueId (see index.ts).
@@ -79,6 +79,26 @@ issueRoute.patch("/", async (c) => {
       },
       400,
     );
+  }
+
+  // A new assignee must be a member of the issue's workspace.
+  if (parsed.data.assigneeId) {
+    const member = await getMembership(
+      db,
+      access.workspaceId,
+      parsed.data.assigneeId,
+    );
+    if (!member) {
+      return c.json(
+        {
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "指定された担当者はこのワークスペースのメンバーではありません",
+          },
+        },
+        400,
+      );
+    }
   }
 
   // updatedAt is bumped automatically via the schema's $onUpdate.

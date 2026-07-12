@@ -97,6 +97,7 @@ export type IssueFilters = {
   status?: IssueStatus;
   priority?: IssuePriority;
   type?: IssueType;
+  assigneeId?: string;
   q?: string;
 };
 
@@ -109,6 +110,9 @@ export const updateIssueSchema = z
     type: z.enum(ISSUE_TYPES),
     status: z.enum(ISSUE_STATUSES),
     priority: z.enum(ISSUE_PRIORITIES),
+    // null clears the assignee; a string must be a member of the workspace
+    // (enforced by the API).
+    assigneeId: z.string().min(1).nullable(),
   })
   .partial()
   .refine((v) => Object.keys(v).length > 0, {
@@ -141,6 +145,9 @@ export type UserSummary = {
   name: string;
   image: string | null;
 };
+
+// A workspace member: a user plus their role in the workspace.
+export type Member = UserSummary & { role: WorkspaceRole };
 
 // A single issue with its reporter/assignee resolved to user summaries.
 export type IssueDetail = Issue & {

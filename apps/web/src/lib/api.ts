@@ -9,6 +9,7 @@ import type {
   Issue,
   IssueDetail,
   IssueFilters,
+  Member,
   Project,
   UpdateIssueInput,
   Workspace,
@@ -52,6 +53,9 @@ export const createWorkspace = (input: CreateWorkspaceInput) =>
 
 export const listProjects = (workspaceId: string) =>
   api<Project[]>(`/api/workspaces/${workspaceId}/projects`);
+
+export const listMembers = (projectId: string) =>
+  api<Member[]>(`/api/projects/${projectId}/members`);
 
 export const createProject = (workspaceId: string, input: CreateProjectInput) =>
   api<Project>(`/api/workspaces/${workspaceId}/projects`, {

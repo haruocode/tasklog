@@ -66,6 +66,8 @@ issuesRoute.get("/", async (c) => {
   if (priority) conditions.push(eq(issues.priority, priority));
   const type = oneOf(ISSUE_TYPES, c.req.query("type"));
   if (type) conditions.push(eq(issues.type, type));
+  const assigneeId = c.req.query("assigneeId")?.trim();
+  if (assigneeId) conditions.push(eq(issues.assigneeId, assigneeId));
   const q = c.req.query("q")?.trim();
   if (q) conditions.push(like(issues.title, `%${q}%`));
 

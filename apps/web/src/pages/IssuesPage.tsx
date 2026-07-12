@@ -11,7 +11,7 @@ import {
   type IssueType,
 } from "@tasklog/shared";
 import { authClient } from "../lib/auth-client";
-import { ApiRequestError, createIssue, listIssues } from "../lib/api";
+import { ApiRequestError, createIssue, listIssues, listMembers } from "../lib/api";
 import { PRIORITY_LABELS, STATUS_LABELS, TYPE_LABELS } from "../lib/issue-labels";
 
 function CreateIssueForm({ projectId }: { projectId: string }) {
@@ -98,8 +98,15 @@ export function IssuesPage() {
   const [status, setStatus] = useState<IssueFilters["status"] | "">(ALL);
   const [priority, setPriority] = useState<IssueFilters["priority"] | "">(ALL);
   const [type, setType] = useState<IssueFilters["type"] | "">(ALL);
+  const [assigneeId, setAssigneeId] = useState("");
   const [keyword, setKeyword] = useState("");
   const [debouncedKeyword, setDebouncedKeyword] = useState("");
+
+  const membersQuery = useQuery({
+    queryKey: ["members", projectId],
+    queryFn: () => listMembers(projectId!),
+    enabled: !!session && !!projectId,
+  });
 
   // Debounce the keyword so typing doesn't fire a request per keystroke.
   useEffect(() => {
@@ -111,6 +118,7 @@ export function IssuesPage() {
     status: status || undefined,
     priority: priority || undefined,
     type: type || undefined,
+    assigneeId: assigneeId || undefined,
     q: debouncedKeyword || undefined,
   };
 
@@ -119,6 +127,8 @@ export function IssuesPage() {
     queryFn: () => listIssues(projectId!, filters),
     enabled: !!session && !!projectId,
   });
+
+  const memberName = new Map(membersQuery.data?.map((m) => [m.id, m.name]));
 
   if (isPending) {
     return <p className="p-8 text-gray-400">確認中…</p>;
@@ -189,6 +199,18 @@ export function IssuesPage() {
             </option>
           ))}
         </select>
+        <select
+          value={assigneeId}
+          onChange={(e) => setAssigneeId(e.target.value)}
+          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+        >
+          <option value="">全担当者</option>
+          {membersQuery.data?.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <section className="flex flex-col gap-2">
@@ -202,7 +224,7 @@ export function IssuesPage() {
         )}
         {issuesQuery.data?.length === 0 && (
           <p className="text-sm text-gray-500">
-            {status || priority || type || debouncedKeyword
+            {status || priority || type || assigneeId || debouncedKeyword
               ? "条件に一致するイシューがありません。"
               : "まだイシューがありません。上のフォームから作成してください。"}
           </p>
@@ -215,6 +237,7 @@ export function IssuesPage() {
                 <th className="py-2 pr-3 font-medium">タイトル</th>
                 <th className="py-2 pr-3 font-medium">種別</th>
                 <th className="py-2 pr-3 font-medium">優先度</th>
+                <th className="py-2 pr-3 font-medium">担当者</th>
                 <th className="py-2 font-medium">ステータス</th>
               </tr>
             </thead>
@@ -236,6 +259,13 @@ export function IssuesPage() {
                   </td>
                   <td className="py-2 pr-3 text-gray-600">
                     {PRIORITY_LABELS[issue.priority]}
+                  </td>
+                  <td className="py-2 pr-3 text-gray-600">
+                    {issue.assigneeId ? (
+                      (memberName.get(issue.assigneeId) ?? "—")
+                    ) : (
+                      <span className="text-gray-400">未割り当て</span>
+                    )}
                   </td>
                   <td className="py-2 text-gray-600">
                     {STATUS_LABELS[issue.status]}

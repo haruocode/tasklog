@@ -69,6 +69,7 @@ export async function getProjectAccess(
 
 export type IssueAccess = {
   issue: typeof issues.$inferSelect;
+  workspaceId: string;
   projectKey: string;
   role: WorkspaceRole;
 };
@@ -84,6 +85,7 @@ export async function getIssueAccess(
   const [row] = await db
     .select({
       issue: issues,
+      workspaceId: projects.workspaceId,
       projectKey: projects.key,
       role: workspaceMembers.role,
     })
@@ -100,5 +102,10 @@ export async function getIssueAccess(
     .limit(1);
 
   if (!row) return undefined;
-  return { issue: row.issue, projectKey: row.projectKey, role: row.role };
+  return {
+    issue: row.issue,
+    workspaceId: row.workspaceId,
+    projectKey: row.projectKey,
+    role: row.role,
+  };
 }

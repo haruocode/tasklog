@@ -14,6 +14,7 @@ import {
   createComment,
   getIssue,
   listComments,
+  listMembers,
   updateIssue,
 } from "../lib/api";
 import { PRIORITY_LABELS, STATUS_LABELS, TYPE_LABELS } from "../lib/issue-labels";
@@ -123,11 +124,17 @@ export function IssueDetailPage() {
     enabled: !!session && !!issueId,
   });
 
+  const membersQuery = useQuery({
+    queryKey: ["members", projectId],
+    queryFn: () => listMembers(projectId!),
+    enabled: !!session && !!projectId,
+  });
+
   const mutation = useMutation({
     mutationFn: (input: UpdateIssueInput) => updateIssue(issueId!, input),
     onSuccess: (updated) => {
       queryClient.setQueryData<IssueDetail>(["issue", issueId], updated);
-      // The list shows status/priority, so refresh it too.
+      // The list shows status/priority/assignee, so refresh it too.
       queryClient.invalidateQueries({ queryKey: ["issues", projectId] });
     },
   });
@@ -216,9 +223,21 @@ export function IssueDetailPage() {
               </select>
             </Field>
             <Field label="担当者">
-              {issueQuery.data.assignee?.name ?? (
-                <span className="text-gray-400">未割り当て</span>
-              )}
+              <select
+                value={issueQuery.data.assigneeId ?? ""}
+                disabled={mutation.isPending || membersQuery.isLoading}
+                onChange={(e) =>
+                  mutation.mutate({ assigneeId: e.target.value || null })
+                }
+                className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm disabled:opacity-50"
+              >
+                <option value="">未割り当て</option>
+                {membersQuery.data?.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
             </Field>
             <Field label="報告者">{issueQuery.data.reporter.name}</Field>
           </dl>
