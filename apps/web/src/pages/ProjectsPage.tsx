@@ -112,15 +112,17 @@ export function ProjectsPage() {
           </p>
         )}
         {projectsQuery.data?.map((p) => (
-          <div
+          <Link
             key={p.id}
-            className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3"
+            to="/projects/$projectId/issues"
+            params={{ projectId: p.id }}
+            className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 hover:bg-gray-50"
           >
             <span className="font-medium">{p.name}</span>
             <span className="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-600">
               {p.key}
             </span>
-          </div>
+          </Link>
         ))}
       </section>
     </main>

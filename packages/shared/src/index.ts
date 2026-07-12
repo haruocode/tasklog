@@ -77,3 +77,35 @@ export type Project = {
   createdAt: string;
   updatedAt: string;
 };
+
+// --- Issues --------------------------------------------------------------------
+
+// New issues always start as TODO; status is changed later via PATCH, so it is
+// not part of the create input (see AGENTS.md workflow).
+export const createIssueSchema = z.object({
+  title: z.string().trim().min(1, "タイトルは必須です").max(200),
+  description: z.string().trim().max(5000).optional(),
+  type: z.enum(ISSUE_TYPES).default("TASK"),
+  priority: z.enum(ISSUE_PRIORITIES).default("MEDIUM"),
+  assigneeId: z.string().min(1).optional(),
+});
+export type CreateIssueInput = z.infer<typeof createIssueSchema>;
+
+// An issue as returned by the API. `key` is the display key (projects.key +
+// "-" + issueNumber, e.g. "TASK-1"). Timestamps are ISO strings.
+export type Issue = {
+  id: string;
+  projectId: string;
+  issueNumber: number;
+  key: string;
+  title: string;
+  description: string | null;
+  type: IssueType;
+  status: IssueStatus;
+  priority: IssuePriority;
+  assigneeId: string | null;
+  reporterId: string;
+  dueDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+};

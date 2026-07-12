@@ -1,8 +1,10 @@
 import type {
   ApiError,
   ApiSuccess,
+  CreateIssueInput,
   CreateProjectInput,
   CreateWorkspaceInput,
+  Issue,
   Project,
   Workspace,
 } from "@tasklog/shared";
@@ -48,6 +50,15 @@ export const listProjects = (workspaceId: string) =>
 
 export const createProject = (workspaceId: string, input: CreateProjectInput) =>
   api<Project>(`/api/workspaces/${workspaceId}/projects`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+export const listIssues = (projectId: string) =>
+  api<Issue[]>(`/api/projects/${projectId}/issues`);
+
+export const createIssue = (projectId: string, input: CreateIssueInput) =>
+  api<Issue>(`/api/projects/${projectId}/issues`, {
     method: "POST",
     body: JSON.stringify(input),
   });
