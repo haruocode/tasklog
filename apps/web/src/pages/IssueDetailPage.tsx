@@ -1,7 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
+import {
+  ISSUE_PRIORITIES,
+  ISSUE_STATUSES,
+  type IssueDetail,
+  type UpdateIssueInput,
+} from "@tasklog/shared";
 import { authClient } from "../lib/auth-client";
-import { ApiRequestError, getIssue } from "../lib/api";
+import { ApiRequestError, getIssue, updateIssue } from "../lib/api";
 import { PRIORITY_LABELS, STATUS_LABELS, TYPE_LABELS } from "../lib/issue-labels";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -16,11 +22,21 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export function IssueDetailPage() {
   const { projectId, issueId } = useParams({ strict: false });
   const { data: session, isPending } = authClient.useSession();
+  const queryClient = useQueryClient();
 
   const issueQuery = useQuery({
     queryKey: ["issue", issueId],
     queryFn: () => getIssue(issueId!),
     enabled: !!session && !!issueId,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (input: UpdateIssueInput) => updateIssue(issueId!, input),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<IssueDetail>(["issue", issueId], updated);
+      // The list shows status/priority, so refresh it too.
+      queryClient.invalidateQueries({ queryKey: ["issues", projectId] });
+    },
   });
 
   if (isPending) {
@@ -70,11 +86,41 @@ export function IssueDetailPage() {
 
           <dl className="grid grid-cols-2 gap-4 rounded-lg border border-gray-200 p-4 sm:grid-cols-4">
             <Field label="ステータス">
-              {STATUS_LABELS[issueQuery.data.status]}
+              <select
+                value={issueQuery.data.status}
+                disabled={mutation.isPending}
+                onChange={(e) =>
+                  mutation.mutate({
+                    status: e.target.value as IssueDetail["status"],
+                  })
+                }
+                className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm disabled:opacity-50"
+              >
+                {ISSUE_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {STATUS_LABELS[s]}
+                  </option>
+                ))}
+              </select>
             </Field>
             <Field label="種別">{TYPE_LABELS[issueQuery.data.type]}</Field>
             <Field label="優先度">
-              {PRIORITY_LABELS[issueQuery.data.priority]}
+              <select
+                value={issueQuery.data.priority}
+                disabled={mutation.isPending}
+                onChange={(e) =>
+                  mutation.mutate({
+                    priority: e.target.value as IssueDetail["priority"],
+                  })
+                }
+                className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm disabled:opacity-50"
+              >
+                {ISSUE_PRIORITIES.map((p) => (
+                  <option key={p} value={p}>
+                    {PRIORITY_LABELS[p]}
+                  </option>
+                ))}
+              </select>
             </Field>
             <Field label="担当者">
               {issueQuery.data.assignee?.name ?? (
@@ -83,6 +129,13 @@ export function IssueDetailPage() {
             </Field>
             <Field label="報告者">{issueQuery.data.reporter.name}</Field>
           </dl>
+          {mutation.isError && (
+            <p className="text-sm text-red-600">
+              {mutation.error instanceof ApiRequestError
+                ? mutation.error.message
+                : "更新に失敗しました"}
+            </p>
+          )}
 
           <section className="flex flex-col gap-2">
             <h2 className="text-sm font-medium text-gray-500">説明</h2>

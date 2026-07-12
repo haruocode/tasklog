@@ -91,6 +91,22 @@ export const createIssueSchema = z.object({
 });
 export type CreateIssueInput = z.infer<typeof createIssueSchema>;
 
+// Partial update of an editable issue. All fields optional; at least one
+// required. `description` accepts null to clear it.
+export const updateIssueSchema = z
+  .object({
+    title: z.string().trim().min(1, "タイトルは必須です").max(200),
+    description: z.string().trim().max(5000).nullable(),
+    type: z.enum(ISSUE_TYPES),
+    status: z.enum(ISSUE_STATUSES),
+    priority: z.enum(ISSUE_PRIORITIES),
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, {
+    message: "変更する項目がありません",
+  });
+export type UpdateIssueInput = z.infer<typeof updateIssueSchema>;
+
 // An issue as returned by the API. `key` is the display key (projects.key +
 // "-" + issueNumber, e.g. "TASK-1"). Timestamps are ISO strings.
 export type Issue = {
