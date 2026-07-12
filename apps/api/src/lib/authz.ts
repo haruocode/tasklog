@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { projects, workspaceMembers, type Db } from "@tasklog/db";
+import { issues, projects, workspaceMembers, type Db } from "@tasklog/db";
 import type { WorkspaceRole } from "@tasklog/shared";
 
 export type Membership = { role: WorkspaceRole };
@@ -65,4 +65,40 @@ export async function getProjectAccess(
     project: { id: row.id, workspaceId: row.workspaceId, key: row.key },
     role: row.role,
   };
+}
+
+export type IssueAccess = {
+  issue: typeof issues.$inferSelect;
+  projectKey: string;
+  role: WorkspaceRole;
+};
+
+// Resolves an issue, its project key, and the caller's membership role.
+// Returns undefined when the issue does not exist OR the caller is not a member
+// of its workspace; callers treat both as ISSUE_NOT_FOUND.
+export async function getIssueAccess(
+  db: Db,
+  issueId: string,
+  userId: string,
+): Promise<IssueAccess | undefined> {
+  const [row] = await db
+    .select({
+      issue: issues,
+      projectKey: projects.key,
+      role: workspaceMembers.role,
+    })
+    .from(issues)
+    .innerJoin(projects, eq(projects.id, issues.projectId))
+    .innerJoin(
+      workspaceMembers,
+      and(
+        eq(workspaceMembers.workspaceId, projects.workspaceId),
+        eq(workspaceMembers.userId, userId),
+      ),
+    )
+    .where(eq(issues.id, issueId))
+    .limit(1);
+
+  if (!row) return undefined;
+  return { issue: row.issue, projectKey: row.projectKey, role: row.role };
 }

@@ -8,6 +8,7 @@ import { HomePage } from "./pages/HomePage";
 import { WorkspacesPage } from "./pages/WorkspacesPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { IssuesPage } from "./pages/IssuesPage";
+import { IssueDetailPage } from "./pages/IssueDetailPage";
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -37,11 +38,18 @@ const issuesRoute = createRoute({
   component: IssuesPage,
 });
 
+const issueDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/projects/$projectId/issues/$issueId",
+  component: IssueDetailPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   workspacesRoute,
   projectsRoute,
   issuesRoute,
+  issueDetailRoute,
 ]);
 
 export const router = createRouter({ routeTree });

@@ -5,6 +5,7 @@ import type {
   CreateProjectInput,
   CreateWorkspaceInput,
   Issue,
+  IssueDetail,
   Project,
   Workspace,
 } from "@tasklog/shared";
@@ -62,3 +63,6 @@ export const createIssue = (projectId: string, input: CreateIssueInput) =>
     method: "POST",
     body: JSON.stringify(input),
   });
+
+export const getIssue = (issueId: string) =>
+  api<IssueDetail>(`/api/issues/${issueId}`);

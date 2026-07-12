@@ -109,3 +109,16 @@ export type Issue = {
   createdAt: string;
   updatedAt: string;
 };
+
+// Minimal user info embedded in responses (no email/private fields).
+export type UserSummary = {
+  id: string;
+  name: string;
+  image: string | null;
+};
+
+// A single issue with its reporter/assignee resolved to user summaries.
+export type IssueDetail = Issue & {
+  reporter: UserSummary;
+  assignee: UserSummary | null;
+};

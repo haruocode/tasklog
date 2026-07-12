@@ -14,7 +14,7 @@ const PROJECT_NOT_FOUND = {
 
 type IssueRow = typeof issues.$inferSelect;
 
-const toIssue = (r: IssueRow, projectKey: string): Issue => ({
+export const toIssue = (r: IssueRow, projectKey: string): Issue => ({
   id: r.id,
   projectId: r.projectId,
   issueNumber: r.issueNumber,

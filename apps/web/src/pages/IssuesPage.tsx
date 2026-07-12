@@ -6,32 +6,11 @@ import {
   ISSUE_TYPES,
   createIssueSchema,
   type IssuePriority,
-  type IssueStatus,
   type IssueType,
 } from "@tasklog/shared";
 import { authClient } from "../lib/auth-client";
 import { ApiRequestError, createIssue, listIssues } from "../lib/api";
-
-// UI labels (Japanese) for fixed enums. Internal values stay English.
-const STATUS_LABELS: Record<IssueStatus, string> = {
-  TODO: "未対応",
-  IN_PROGRESS: "対応中",
-  IN_REVIEW: "レビュー中",
-  DONE: "完了",
-  CLOSED: "クローズ",
-};
-const TYPE_LABELS: Record<IssueType, string> = {
-  TASK: "タスク",
-  BUG: "バグ",
-  FEATURE: "機能追加",
-  IMPROVEMENT: "改善",
-};
-const PRIORITY_LABELS: Record<IssuePriority, string> = {
-  LOW: "低",
-  MEDIUM: "中",
-  HIGH: "高",
-  URGENT: "緊急",
-};
+import { PRIORITY_LABELS, STATUS_LABELS, TYPE_LABELS } from "../lib/issue-labels";
 
 function CreateIssueForm({ projectId }: { projectId: string }) {
   const queryClient = useQueryClient();
@@ -171,8 +150,14 @@ export function IssuesPage() {
             <tbody>
               {issuesQuery.data.map((issue) => (
                 <tr key={issue.id} className="border-b border-gray-100">
-                  <td className="py-2 pr-3 font-mono text-xs text-gray-600">
-                    {issue.key}
+                  <td className="py-2 pr-3 font-mono text-xs">
+                    <Link
+                      to="/projects/$projectId/issues/$issueId"
+                      params={{ projectId: projectId!, issueId: issue.id }}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {issue.key}
+                    </Link>
                   </td>
                   <td className="py-2 pr-3 font-medium">{issue.title}</td>
                   <td className="py-2 pr-3 text-gray-600">
