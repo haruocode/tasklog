@@ -1,21 +1,21 @@
 import { z } from "zod";
 
-// Fixed issue enums (see AGENTS.md). SQLite has no enum type, so these are the
+// Fixed ticket enums (see AGENTS.md). SQLite has no enum type, so these are the
 // single source of truth used for Zod validation and Drizzle text unions.
-export const ISSUE_STATUSES = [
+export const TICKET_STATUSES = [
   "TODO",
   "IN_PROGRESS",
   "IN_REVIEW",
   "DONE",
   "CLOSED",
 ] as const;
-export type IssueStatus = (typeof ISSUE_STATUSES)[number];
+export type TicketStatus = (typeof TICKET_STATUSES)[number];
 
-export const ISSUE_TYPES = ["TASK", "BUG", "FEATURE", "IMPROVEMENT"] as const;
-export type IssueType = (typeof ISSUE_TYPES)[number];
+export const TICKET_TYPES = ["TASK", "BUG", "FEATURE", "IMPROVEMENT"] as const;
+export type TicketType = (typeof TICKET_TYPES)[number];
 
-export const ISSUE_PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
-export type IssuePriority = (typeof ISSUE_PRIORITIES)[number];
+export const TICKET_PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
+export type TicketPriority = (typeof TICKET_PRIORITIES)[number];
 
 export const WORKSPACE_ROLES = ["OWNER", "ADMIN", "MEMBER"] as const;
 export type WorkspaceRole = (typeof WORKSPACE_ROLES)[number];
@@ -52,7 +52,7 @@ export type Workspace = {
 // --- Projects ------------------------------------------------------------------
 
 // Key must start with a letter, then uppercase letters/digits, 2–10 chars total.
-// Used to build issue keys like TASK-1.
+// Used to build ticket keys like TASK-1.
 export const projectKeySchema = z
   .string()
   .trim()
@@ -78,38 +78,38 @@ export type Project = {
   updatedAt: string;
 };
 
-// --- Issues --------------------------------------------------------------------
+// --- Tickets --------------------------------------------------------------------
 
-// New issues always start as TODO; status is changed later via PATCH, so it is
+// New tickets always start as TODO; status is changed later via PATCH, so it is
 // not part of the create input (see AGENTS.md workflow).
-export const createIssueSchema = z.object({
+export const createTicketSchema = z.object({
   title: z.string().trim().min(1, "タイトルは必須です").max(200),
   description: z.string().trim().max(5000).optional(),
-  type: z.enum(ISSUE_TYPES).default("TASK"),
-  priority: z.enum(ISSUE_PRIORITIES).default("MEDIUM"),
+  type: z.enum(TICKET_TYPES).default("TASK"),
+  priority: z.enum(TICKET_PRIORITIES).default("MEDIUM"),
   assigneeId: z.string().min(1).optional(),
 });
-export type CreateIssueInput = z.infer<typeof createIssueSchema>;
+export type CreateTicketInput = z.infer<typeof createTicketSchema>;
 
-// Filters for listing issues. All optional; omitted fields are not constrained.
-// `q` is a keyword matched against the issue title.
-export type IssueFilters = {
-  status?: IssueStatus;
-  priority?: IssuePriority;
-  type?: IssueType;
+// Filters for listing tickets. All optional; omitted fields are not constrained.
+// `q` is a keyword matched against the ticket title.
+export type TicketFilters = {
+  status?: TicketStatus;
+  priority?: TicketPriority;
+  type?: TicketType;
   assigneeId?: string;
   q?: string;
 };
 
-// Partial update of an editable issue. All fields optional; at least one
+// Partial update of an editable ticket. All fields optional; at least one
 // required. `description` accepts null to clear it.
-export const updateIssueSchema = z
+export const updateTicketSchema = z
   .object({
     title: z.string().trim().min(1, "タイトルは必須です").max(200),
     description: z.string().trim().max(5000).nullable(),
-    type: z.enum(ISSUE_TYPES),
-    status: z.enum(ISSUE_STATUSES),
-    priority: z.enum(ISSUE_PRIORITIES),
+    type: z.enum(TICKET_TYPES),
+    status: z.enum(TICKET_STATUSES),
+    priority: z.enum(TICKET_PRIORITIES),
     // null clears the assignee; a string must be a member of the workspace
     // (enforced by the API).
     assigneeId: z.string().min(1).nullable(),
@@ -118,20 +118,20 @@ export const updateIssueSchema = z
   .refine((v) => Object.keys(v).length > 0, {
     message: "変更する項目がありません",
   });
-export type UpdateIssueInput = z.infer<typeof updateIssueSchema>;
+export type UpdateTicketInput = z.infer<typeof updateTicketSchema>;
 
-// An issue as returned by the API. `key` is the display key (projects.key +
-// "-" + issueNumber, e.g. "TASK-1"). Timestamps are ISO strings.
-export type Issue = {
+// An ticket as returned by the API. `key` is the display key (projects.key +
+// "-" + ticketNumber, e.g. "TASK-1"). Timestamps are ISO strings.
+export type Ticket = {
   id: string;
   projectId: string;
-  issueNumber: number;
+  ticketNumber: number;
   key: string;
   title: string;
   description: string | null;
-  type: IssueType;
-  status: IssueStatus;
-  priority: IssuePriority;
+  type: TicketType;
+  status: TicketStatus;
+  priority: TicketPriority;
   assigneeId: string | null;
   reporterId: string;
   dueDate: string | null;
@@ -149,8 +149,8 @@ export type UserSummary = {
 // A workspace member: a user plus their role in the workspace.
 export type Member = UserSummary & { role: WorkspaceRole };
 
-// A single issue with its reporter/assignee resolved to user summaries.
-export type IssueDetail = Issue & {
+// A single ticket with its reporter/assignee resolved to user summaries.
+export type TicketDetail = Ticket & {
   reporter: UserSummary;
   assignee: UserSummary | null;
 };
@@ -165,7 +165,7 @@ export type CreateCommentInput = z.infer<typeof createCommentSchema>;
 // A comment with its author resolved to a user summary.
 export type Comment = {
   id: string;
-  issueId: string;
+  ticketId: string;
   body: string;
   author: UserSummary;
   createdAt: string;

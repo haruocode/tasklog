@@ -24,7 +24,7 @@
 ### DB に D1（SQLite）を選んだ理由
 
 - スタックを Cloudflare に統一し、運用とコストを最小化する
-- ドメイン（workspace / project / issue / comment）は素直なリレーショナルで、SQLite で十分に扱える
+- ドメイン（workspace / project / ticket / comment）は素直なリレーショナルで、SQLite で十分に扱える
 - 小チーム・個人プロジェクト用途では D1 の制約が実害になりにくい
 
 ### 受け入れる制約（トレードオフ）
@@ -57,9 +57,9 @@
 
 ### 主キーの ID 方式は UUIDv7（text）
 
-- すべてのレコード主キー（`users.id`, `workspaces.id`, `issues.id` など）は **UUIDv7 を `text` 型** で保持
+- すべてのレコード主キー（`users.id`, `workspaces.id`, `tickets.id` など）は **UUIDv7 を `text` 型** で保持
 - 理由:
   - Workers（JS）側で挿入前に生成でき、DB 採番に依存しない
   - 時刻順にソート可能で、SQLite の B-tree インデックス局所性が良い
   - 標準規格でツールの追従が安心
-- **表示用キー**（`TASK-1` 等）の元になる `issues.issue_number` は別物で、**プロジェクトごとの連番 integer** を維持する
+- **表示用キー**（`TASK-1` 等）の元になる `tickets.ticket_number` は別物で、**プロジェクトごとの連番 integer** を維持する

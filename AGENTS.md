@@ -4,15 +4,15 @@
 
 ## プロジェクト概要
 
-`tasklog` は、Backlog・GitHub Issues・Linear などのツールに着想を得た、軽量なチケット管理システムです。
+`tasklog` は、Backlog・GitHub Tickets・Linear などのツールに着想を得た、軽量なチケット管理システムです。
 
-Backlog を完全に再現することが目的ではありません。最初のターゲットは、個人プロジェクトや小規模チーム向けの、小さく実用的なイシュートラッカーです。
+Backlog を完全に再現することが目的ではありません。最初のターゲットは、個人プロジェクトや小規模チーム向けの、小さく実用的なチケットトラッカーです。
 
 主要な概念:
 
 - Workspace（ワークスペース）
 - Project（プロジェクト）
-- Issue（イシュー）
+- Ticket（チケット）
 - Comment（コメント）
 - Member（メンバー）
 - Status（ステータス）
@@ -30,9 +30,9 @@ MVP がサポートすべきもの:
 - ユーザー認証
 - ワークスペース作成
 - プロジェクト作成
-- イシュー作成
-- イシュー一覧
-- イシュー詳細
+- チケット作成
+- チケット一覧
+- チケット詳細
 - ステータス変更
 - 優先度変更
 - 担当者変更
@@ -158,7 +158,7 @@ docs
 
 - `workspace`
 - `project`
-- `issue`
+- `ticket`
 - `comment`
 - `member`
 - `activity`
@@ -173,7 +173,7 @@ docs
 - `object`
 - `manager`
 
-内部では、強い理由がない限り `ticket` ではなく `issue` を使用してください。プロダクトとしては引き続き「チケット管理システム」と表現できます。
+内部コード・DB・API・UI を通じて、一貫して `ticket`（チケット）を使用してください。以前は内部名に `issue` を使っていましたが、`ticket` に統一しました。
 
 ## ドメインモデル
 
@@ -212,10 +212,10 @@ projects
 - created_at
 - updated_at
 
-issues
+tickets
 - id
 - project_id
-- issue_number
+- ticket_number
 - title
 - description
 - type
@@ -227,17 +227,17 @@ issues
 - created_at
 - updated_at
 
-issue_comments
+ticket_comments
 - id
-- issue_id
+- ticket_id
 - user_id
 - body
 - created_at
 - updated_at
 
-issue_activities
+ticket_activities
 - id
-- issue_id
+- ticket_id
 - user_id
 - action
 - before_value
@@ -245,7 +245,7 @@ issue_activities
 - created_at
 ```
 
-イシューキーは以下のように表示します:
+チケットキーは以下のように表示します:
 
 ```txt
 TASK-1
@@ -257,17 +257,17 @@ CHAT-1
 これは以下から生成できます:
 
 ```txt
-projects.key + "-" + issues.issue_number
+projects.key + "-" + tickets.ticket_number
 ```
 
-`issue_number` はプロジェクトごとにスコープされるべきです。
+`ticket_number` はプロジェクトごとにスコープされるべきです。
 
-## イシューのステータス
+## チケットのステータス
 
 初期バージョンでは固定のステータスを使用します。
 
 ```ts
-const ISSUE_STATUSES = [
+const TICKET_STATUSES = [
   "TODO",
   "IN_PROGRESS",
   "IN_REVIEW",
@@ -290,12 +290,12 @@ CLOSED      クローズ
 
 MVP ではカスタムワークフローを作らないでください。
 
-## イシュータイプ
+## チケットタイプ
 
-まずは固定のイシュータイプを使用します。
+まずは固定のチケットタイプを使用します。
 
 ```ts
-const ISSUE_TYPES = ["TASK", "BUG", "FEATURE", "IMPROVEMENT"] as const;
+const TICKET_TYPES = ["TASK", "BUG", "FEATURE", "IMPROVEMENT"] as const;
 ```
 
 ラベルの例:
@@ -312,7 +312,7 @@ IMPROVEMENT 改善
 まずは固定の優先度を使用します。
 
 ```ts
-const ISSUE_PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
+const TICKET_PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
 ```
 
 ラベルの例:
@@ -343,15 +343,15 @@ POST   /api/workspaces/:workspaceId/projects
 GET    /api/projects/:projectId
 PATCH  /api/projects/:projectId
 
-GET    /api/projects/:projectId/issues
-POST   /api/projects/:projectId/issues
+GET    /api/projects/:projectId/tickets
+POST   /api/projects/:projectId/tickets
 
-GET    /api/issues/:issueId
-PATCH  /api/issues/:issueId
-DELETE /api/issues/:issueId
+GET    /api/tickets/:ticketId
+PATCH  /api/tickets/:ticketId
+DELETE /api/tickets/:ticketId
 
-GET    /api/issues/:issueId/comments
-POST   /api/issues/:issueId/comments
+GET    /api/tickets/:ticketId/comments
+POST   /api/tickets/:ticketId/comments
 
 PATCH  /api/comments/:commentId
 DELETE /api/comments/:commentId
@@ -372,8 +372,8 @@ API レスポンスは予測可能に保ってください。
 ```ts
 {
   error: {
-    code: "ISSUE_NOT_FOUND",
-    message: "Issue not found"
+    code: "TICKET_NOT_FOUND",
+    message: "Ticket not found"
   }
 }
 ```
@@ -386,9 +386,9 @@ API レスポンスは予測可能に保ってください。
 /login
 /workspaces
 /workspaces/:workspaceId/projects
-/projects/:projectId/issues
-/projects/:projectId/issues/new
-/projects/:projectId/issues/:issueId
+/projects/:projectId/tickets
+/projects/:projectId/tickets/new
+/projects/:projectId/tickets/:ticketId
 /projects/:projectId/settings
 ```
 
@@ -407,14 +407,14 @@ API レスポンスは予測可能に保ってください。
 
 シンプルなレイアウトを使用:
 
-- イシュー一覧にはテーブル
+- チケット一覧にはテーブル
 - 作成/編集にはフォーム
-- イシュー詳細には詳細パネル
-- コメントはイシュー説明の下に
+- チケット詳細には詳細パネル
+- コメントはチケット説明の下に
 
 過度なアニメーション UI は避けてください。
 
-イシューのワークフローが役立つようになる前に、ダッシュボードを作らないでください。
+チケットのワークフローが役立つようになる前に、ダッシュボードを作らないでください。
 
 ## バリデーション
 
@@ -429,7 +429,7 @@ API レスポンスは予測可能に保ってください。
 
 例:
 
-- イシューのタイトルは必須
+- チケットのタイトルは必須
 - プロジェクトキーは必須
 - プロジェクトキーは英数大文字であるべき
 - ステータスは許可されたステータスのいずれか
@@ -450,18 +450,18 @@ MEMBER
 初期の挙動:
 
 - OWNER はワークスペースとメンバーを管理できる
-- ADMIN はプロジェクトとイシューを管理できる
-- MEMBER はイシュー/コメントを作成・更新できる
+- ADMIN はプロジェクトとチケットを管理できる
+- MEMBER はチケット/コメントを作成・更新できる
 
 早い段階で権限ルールを作り込みすぎないでください。
 
 ## アクティビティログ
 
-イシューへの重要な変更を記録します。
+チケットへの重要な変更を記録します。
 
 例:
 
-- イシュー作成
+- チケット作成
 - ステータス変更
 - 優先度変更
 - 担当者変更
@@ -480,7 +480,7 @@ MVP で複雑な監査システムを作らないでください。
 - ステータス
 - 優先度
 - 担当者
-- イシュータイプ
+- チケットタイプ
 - キーワード
 - 期日
 
@@ -497,7 +497,7 @@ MVP で複雑な監査システムを作らないでください。
 - 共有ユーティリティのユニットテスト
 - 重要なエンドポイントの API テスト
 - 重要なフォームのコンポーネントテスト
-- コアなイシューワークフローの E2E テスト
+- コアなチケットワークフローの E2E テスト
 
 コアな E2E フロー:
 
@@ -505,10 +505,10 @@ MVP で複雑な監査システムを作らないでください。
 login
 create workspace
 create project
-create issue
-change issue status
+create ticket
+change ticket status
 add comment
-filter issue list
+filter ticket list
 ```
 
 実装の詳細のテストに時間をかけすぎないでください。
@@ -554,8 +554,8 @@ Zustand は以下に使用できます:
 
 ```ts
 ["workspaces"][("workspace", workspaceId)][("projects", workspaceId)][
-  ("issues", projectId, filters)
-][("issue", issueId)][("issue-comments", issueId)];
+  ("tickets", projectId, filters)
+][("ticket", ticketId)][("ticket-comments", ticketId)];
 ```
 
 ## エラーハンドリング
@@ -574,7 +574,7 @@ FORBIDDEN
 VALIDATION_ERROR
 WORKSPACE_NOT_FOUND
 PROJECT_NOT_FOUND
-ISSUE_NOT_FOUND
+TICKET_NOT_FOUND
 COMMENT_NOT_FOUND
 ```
 
@@ -634,9 +634,9 @@ docs/
 3. 認証
 4. ワークスペース作成
 5. プロジェクト作成
-6. イシュー作成
-7. イシュー一覧
-8. イシュー詳細
+6. チケット作成
+7. チケット一覧
+8. チケット詳細
 9. ステータス更新
 10. コメント
 11. フィルター
@@ -651,13 +651,13 @@ docs/
 - サインイン
 - ワークスペース作成
 - プロジェクト作成
-- イシュー作成
-- イシュー一覧の表示
-- イシュー詳細を開く
-- イシューのステータス更新
-- イシューの担当者割り当て
+- チケット作成
+- チケット一覧の表示
+- チケット詳細を開く
+- チケットのステータス更新
+- チケットの担当者割り当て
 - コメント追加
-- ステータスと担当者によるイシューのフィルタリング
+- ステータスと担当者によるチケットのフィルタリング
 
 これが動作すれば、このアプリは実用的なチケット管理システムです。
 
@@ -694,7 +694,7 @@ docs/
 例:
 
 ```txt
-Internal: issue, project, workspace, assignee
+Internal: ticket, project, workspace, assignee
 UI: 課題, プロジェクト, ワークスペース, 担当者
 ```
 
@@ -709,9 +709,9 @@ UI: 課題, プロジェクト, ワークスペース, 担当者
 - Slack 連携
 - Wiki
 - ガントチャート
-- AI によるイシュー生成
+- AI によるチケット生成
 - ファイルアップロード
-- 公開イシューページ
+- 公開チケットページ
 - モバイルアプリ
 
 ## 最初のマイルストーン案
@@ -726,8 +726,8 @@ UI: 課題, プロジェクト, ワークスペース, 担当者
 - 基本的な認証
 - ワークスペースの CRUD
 - プロジェクトの CRUD
-- イシューの CRUD
+- チケットの CRUD
 - コメントの CRUD
-- シンプルなイシュー一覧フィルター
+- シンプルなチケット一覧フィルター
 
 このマイルストーンは、高度な機能を追加する前に、コアプロダクトが有用であることを証明するためのものです。

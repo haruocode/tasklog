@@ -2,41 +2,41 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import {
-  ISSUE_PRIORITIES,
-  ISSUE_STATUSES,
-  ISSUE_TYPES,
-  createIssueSchema,
-  type IssueFilters,
-  type IssuePriority,
-  type IssueType,
+  TICKET_PRIORITIES,
+  TICKET_STATUSES,
+  TICKET_TYPES,
+  createTicketSchema,
+  type TicketFilters,
+  type TicketPriority,
+  type TicketType,
 } from "@tasklog/shared";
 import { authClient } from "../lib/auth-client";
-import { ApiRequestError, createIssue, listIssues, listMembers } from "../lib/api";
-import { PRIORITY_LABELS, STATUS_LABELS, TYPE_LABELS } from "../lib/issue-labels";
+import { ApiRequestError, createTicket, listTickets, listMembers } from "../lib/api";
+import { PRIORITY_LABELS, STATUS_LABELS, TYPE_LABELS } from "../lib/ticket-labels";
 
-function CreateIssueForm({ projectId }: { projectId: string }) {
+function CreateTicketForm({ projectId }: { projectId: string }) {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
-  const [type, setType] = useState<IssueType>("TASK");
-  const [priority, setPriority] = useState<IssuePriority>("MEDIUM");
+  const [type, setType] = useState<TicketType>("TASK");
+  const [priority, setPriority] = useState<TicketPriority>("MEDIUM");
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: (input: { title: string; type: IssueType; priority: IssuePriority }) =>
-      createIssue(projectId, input),
+    mutationFn: (input: { title: string; type: TicketType; priority: TicketPriority }) =>
+      createTicket(projectId, input),
     onSuccess: () => {
       setTitle("");
       setType("TASK");
       setPriority("MEDIUM");
       setError(null);
-      queryClient.invalidateQueries({ queryKey: ["issues", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["tickets", projectId] });
     },
     onError: (e) => setError(e instanceof Error ? e.message : "作成に失敗しました"),
   });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = createIssueSchema.safeParse({ title, type, priority });
+    const parsed = createTicketSchema.safeParse({ title, type, priority });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "入力が不正です");
       return;
@@ -50,15 +50,15 @@ function CreateIssueForm({ projectId }: { projectId: string }) {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="イシューのタイトル"
+          placeholder="チケットのタイトル"
           className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
         <select
           value={type}
-          onChange={(e) => setType(e.target.value as IssueType)}
+          onChange={(e) => setType(e.target.value as TicketType)}
           className="rounded-md border border-gray-300 px-2 py-2 text-sm"
         >
-          {ISSUE_TYPES.map((t) => (
+          {TICKET_TYPES.map((t) => (
             <option key={t} value={t}>
               {TYPE_LABELS[t]}
             </option>
@@ -66,10 +66,10 @@ function CreateIssueForm({ projectId }: { projectId: string }) {
         </select>
         <select
           value={priority}
-          onChange={(e) => setPriority(e.target.value as IssuePriority)}
+          onChange={(e) => setPriority(e.target.value as TicketPriority)}
           className="rounded-md border border-gray-300 px-2 py-2 text-sm"
         >
-          {ISSUE_PRIORITIES.map((p) => (
+          {TICKET_PRIORITIES.map((p) => (
             <option key={p} value={p}>
               {PRIORITY_LABELS[p]}
             </option>
@@ -91,13 +91,13 @@ function CreateIssueForm({ projectId }: { projectId: string }) {
 // "" means "all" for a select filter.
 const ALL = "";
 
-export function IssuesPage() {
+export function TicketsPage() {
   const { projectId } = useParams({ strict: false });
   const { data: session, isPending } = authClient.useSession();
 
-  const [status, setStatus] = useState<IssueFilters["status"] | "">(ALL);
-  const [priority, setPriority] = useState<IssueFilters["priority"] | "">(ALL);
-  const [type, setType] = useState<IssueFilters["type"] | "">(ALL);
+  const [status, setStatus] = useState<TicketFilters["status"] | "">(ALL);
+  const [priority, setPriority] = useState<TicketFilters["priority"] | "">(ALL);
+  const [type, setType] = useState<TicketFilters["type"] | "">(ALL);
   const [assigneeId, setAssigneeId] = useState("");
   const [keyword, setKeyword] = useState("");
   const [debouncedKeyword, setDebouncedKeyword] = useState("");
@@ -114,7 +114,7 @@ export function IssuesPage() {
     return () => clearTimeout(t);
   }, [keyword]);
 
-  const filters: IssueFilters = {
+  const filters: TicketFilters = {
     status: status || undefined,
     priority: priority || undefined,
     type: type || undefined,
@@ -122,9 +122,9 @@ export function IssuesPage() {
     q: debouncedKeyword || undefined,
   };
 
-  const issuesQuery = useQuery({
-    queryKey: ["issues", projectId, filters],
-    queryFn: () => listIssues(projectId!, filters),
+  const ticketsQuery = useQuery({
+    queryKey: ["tickets", projectId, filters],
+    queryFn: () => listTickets(projectId!, filters),
     enabled: !!session && !!projectId,
   });
 
@@ -148,13 +148,13 @@ export function IssuesPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">イシュー</h1>
+        <h1 className="text-2xl font-bold tracking-tight">チケット</h1>
         <Link to="/workspaces" className="text-sm text-gray-500 hover:underline">
           ワークスペース一覧
         </Link>
       </div>
 
-      <CreateIssueForm projectId={projectId!} />
+      <CreateTicketForm projectId={projectId!} />
 
       <div className="flex flex-wrap items-center gap-2">
         <input
@@ -169,7 +169,7 @@ export function IssuesPage() {
           className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
         >
           <option value={ALL}>全ステータス</option>
-          {ISSUE_STATUSES.map((s) => (
+          {TICKET_STATUSES.map((s) => (
             <option key={s} value={s}>
               {STATUS_LABELS[s]}
             </option>
@@ -181,7 +181,7 @@ export function IssuesPage() {
           className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
         >
           <option value={ALL}>全優先度</option>
-          {ISSUE_PRIORITIES.map((p) => (
+          {TICKET_PRIORITIES.map((p) => (
             <option key={p} value={p}>
               {PRIORITY_LABELS[p]}
             </option>
@@ -193,7 +193,7 @@ export function IssuesPage() {
           className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
         >
           <option value={ALL}>全種別</option>
-          {ISSUE_TYPES.map((t) => (
+          {TICKET_TYPES.map((t) => (
             <option key={t} value={t}>
               {TYPE_LABELS[t]}
             </option>
@@ -214,22 +214,22 @@ export function IssuesPage() {
       </div>
 
       <section className="flex flex-col gap-2">
-        {issuesQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
-        {issuesQuery.isError && (
+        {ticketsQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
+        {ticketsQuery.isError && (
           <p className="text-red-600">
-            {issuesQuery.error instanceof ApiRequestError
-              ? issuesQuery.error.message
+            {ticketsQuery.error instanceof ApiRequestError
+              ? ticketsQuery.error.message
               : "読み込みに失敗しました"}
           </p>
         )}
-        {issuesQuery.data?.length === 0 && (
+        {ticketsQuery.data?.length === 0 && (
           <p className="text-sm text-gray-500">
             {status || priority || type || assigneeId || debouncedKeyword
-              ? "条件に一致するイシューがありません。"
-              : "まだイシューがありません。上のフォームから作成してください。"}
+              ? "条件に一致するチケットがありません。"
+              : "まだチケットがありません。上のフォームから作成してください。"}
           </p>
         )}
-        {issuesQuery.data && issuesQuery.data.length > 0 && (
+        {ticketsQuery.data && ticketsQuery.data.length > 0 && (
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-gray-500">
@@ -242,33 +242,33 @@ export function IssuesPage() {
               </tr>
             </thead>
             <tbody>
-              {issuesQuery.data.map((issue) => (
-                <tr key={issue.id} className="border-b border-gray-100">
+              {ticketsQuery.data.map((ticket) => (
+                <tr key={ticket.id} className="border-b border-gray-100">
                   <td className="py-2 pr-3 font-mono text-xs">
                     <Link
-                      to="/projects/$projectId/issues/$issueId"
-                      params={{ projectId: projectId!, issueId: issue.id }}
+                      to="/projects/$projectId/tickets/$ticketId"
+                      params={{ projectId: projectId!, ticketId: ticket.id }}
                       className="text-blue-600 hover:underline"
                     >
-                      {issue.key}
+                      {ticket.key}
                     </Link>
                   </td>
-                  <td className="py-2 pr-3 font-medium">{issue.title}</td>
+                  <td className="py-2 pr-3 font-medium">{ticket.title}</td>
                   <td className="py-2 pr-3 text-gray-600">
-                    {TYPE_LABELS[issue.type]}
+                    {TYPE_LABELS[ticket.type]}
                   </td>
                   <td className="py-2 pr-3 text-gray-600">
-                    {PRIORITY_LABELS[issue.priority]}
+                    {PRIORITY_LABELS[ticket.priority]}
                   </td>
                   <td className="py-2 pr-3 text-gray-600">
-                    {issue.assigneeId ? (
-                      (memberName.get(issue.assigneeId) ?? "—")
+                    {ticket.assigneeId ? (
+                      (memberName.get(ticket.assigneeId) ?? "—")
                     ) : (
                       <span className="text-gray-400">未割り当て</span>
                     )}
                   </td>
                   <td className="py-2 text-gray-600">
-                    {STATUS_LABELS[issue.status]}
+                    {STATUS_LABELS[ticket.status]}
                   </td>
                 </tr>
               ))}

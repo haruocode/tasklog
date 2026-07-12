@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 import { and, desc, eq, like, max, type SQL } from "drizzle-orm";
-import { createDb, issues, newId } from "@tasklog/db";
+import { createDb, tickets, newId } from "@tasklog/db";
 import {
-  ISSUE_PRIORITIES,
-  ISSUE_STATUSES,
-  ISSUE_TYPES,
-  createIssueSchema,
-  type Issue,
+  TICKET_PRIORITIES,
+  TICKET_STATUSES,
+  TICKET_TYPES,
+  createTicketSchema,
+  type Ticket,
 } from "@tasklog/shared";
 import type { AppEnv } from "../types";
 import { getProjectAccess } from "../lib/authz";
@@ -22,20 +22,20 @@ function oneOf<T extends string>(
     : undefined;
 }
 
-// Mounted under /api/projects/:projectId/issues (see index.ts).
-export const issuesRoute = new Hono<AppEnv>();
+// Mounted under /api/projects/:projectId/tickets (see index.ts).
+export const ticketsRoute = new Hono<AppEnv>();
 
 const PROJECT_NOT_FOUND = {
   error: { code: "PROJECT_NOT_FOUND", message: "Project not found" },
 } as const;
 
-type IssueRow = typeof issues.$inferSelect;
+type TicketRow = typeof tickets.$inferSelect;
 
-export const toIssue = (r: IssueRow, projectKey: string): Issue => ({
+export const toTicket = (r: TicketRow, projectKey: string): Ticket => ({
   id: r.id,
   projectId: r.projectId,
-  issueNumber: r.issueNumber,
-  key: `${projectKey}-${r.issueNumber}`,
+  ticketNumber: r.ticketNumber,
+  key: `${projectKey}-${r.ticketNumber}`,
   title: r.title,
   description: r.description,
   type: r.type,
@@ -48,8 +48,8 @@ export const toIssue = (r: IssueRow, projectKey: string): Issue => ({
   updatedAt: r.updatedAt.toISOString(),
 });
 
-// List issues in a project (any workspace member), newest first.
-issuesRoute.get("/", async (c) => {
+// List tickets in a project (any workspace member), newest first.
+ticketsRoute.get("/", async (c) => {
   const db = createDb(c.env.DB);
   const user = c.get("user");
   const projectId = c.req.param("projectId");
@@ -59,29 +59,29 @@ issuesRoute.get("/", async (c) => {
   if (!access) return c.json(PROJECT_NOT_FOUND, 404);
 
   // Optional filters; unknown enum values are ignored (see oneOf).
-  const conditions: SQL[] = [eq(issues.projectId, projectId)];
-  const status = oneOf(ISSUE_STATUSES, c.req.query("status"));
-  if (status) conditions.push(eq(issues.status, status));
-  const priority = oneOf(ISSUE_PRIORITIES, c.req.query("priority"));
-  if (priority) conditions.push(eq(issues.priority, priority));
-  const type = oneOf(ISSUE_TYPES, c.req.query("type"));
-  if (type) conditions.push(eq(issues.type, type));
+  const conditions: SQL[] = [eq(tickets.projectId, projectId)];
+  const status = oneOf(TICKET_STATUSES, c.req.query("status"));
+  if (status) conditions.push(eq(tickets.status, status));
+  const priority = oneOf(TICKET_PRIORITIES, c.req.query("priority"));
+  if (priority) conditions.push(eq(tickets.priority, priority));
+  const type = oneOf(TICKET_TYPES, c.req.query("type"));
+  if (type) conditions.push(eq(tickets.type, type));
   const assigneeId = c.req.query("assigneeId")?.trim();
-  if (assigneeId) conditions.push(eq(issues.assigneeId, assigneeId));
+  if (assigneeId) conditions.push(eq(tickets.assigneeId, assigneeId));
   const q = c.req.query("q")?.trim();
-  if (q) conditions.push(like(issues.title, `%${q}%`));
+  if (q) conditions.push(like(tickets.title, `%${q}%`));
 
   const rows = await db
     .select()
-    .from(issues)
+    .from(tickets)
     .where(and(...conditions))
-    .orderBy(desc(issues.issueNumber));
+    .orderBy(desc(tickets.ticketNumber));
 
-  return c.json({ data: rows.map((r) => toIssue(r, access.project.key)) });
+  return c.json({ data: rows.map((r) => toTicket(r, access.project.key)) });
 });
 
-// Create an issue (any workspace member). Starts as TODO.
-issuesRoute.post("/", async (c) => {
+// Create a ticket (any workspace member). Starts as TODO.
+ticketsRoute.post("/", async (c) => {
   const db = createDb(c.env.DB);
   const user = c.get("user");
   const projectId = c.req.param("projectId");
@@ -91,7 +91,7 @@ issuesRoute.post("/", async (c) => {
   if (!access) return c.json(PROJECT_NOT_FOUND, 404);
 
   const body = await c.req.json().catch(() => null);
-  const parsed = createIssueSchema.safeParse(body);
+  const parsed = createTicketSchema.safeParse(body);
   if (!parsed.success) {
     return c.json(
       {
@@ -104,21 +104,21 @@ issuesRoute.post("/", async (c) => {
     );
   }
 
-  // issue_number is sequential per project. D1 has no interactive transactions,
-  // so a concurrent create can collide on the (project_id, issue_number) unique
+  // ticket_number is sequential per project. D1 has no interactive transactions,
+  // so a concurrent create can collide on the (project_id, ticket_number) unique
   // index; retry a few times by recomputing MAX+1.
   const now = new Date();
   for (let attempt = 0; attempt < 3; attempt++) {
     const [{ value: maxNumber } = { value: null }] = await db
-      .select({ value: max(issues.issueNumber) })
-      .from(issues)
-      .where(eq(issues.projectId, projectId));
-    const issueNumber = (maxNumber ?? 0) + 1;
+      .select({ value: max(tickets.ticketNumber) })
+      .from(tickets)
+      .where(eq(tickets.projectId, projectId));
+    const ticketNumber = (maxNumber ?? 0) + 1;
 
-    const row: IssueRow = {
+    const row: TicketRow = {
       id: newId(),
       projectId,
-      issueNumber,
+      ticketNumber,
       title: parsed.data.title,
       description: parsed.data.description ?? null,
       type: parsed.data.type,
@@ -132,7 +132,7 @@ issuesRoute.post("/", async (c) => {
     };
 
     try {
-      await db.insert(issues).values(row);
+      await db.insert(tickets).values(row);
     } catch (e) {
       if (e instanceof Error && /UNIQUE constraint failed/.test(e.message)) {
         continue;
@@ -140,13 +140,13 @@ issuesRoute.post("/", async (c) => {
       throw e;
     }
 
-    return c.json({ data: toIssue(row, access.project.key) }, 201);
+    return c.json({ data: toTicket(row, access.project.key) }, 201);
   }
 
   return c.json(
     {
       error: {
-        code: "ISSUE_NUMBER_CONFLICT",
+        code: "TICKET_NUMBER_CONFLICT",
         message: "採番に失敗しました。もう一度お試しください",
       },
     },

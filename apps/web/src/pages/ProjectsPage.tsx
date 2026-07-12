@@ -114,7 +114,7 @@ export function ProjectsPage() {
         {projectsQuery.data?.map((p) => (
           <Link
             key={p.id}
-            to="/projects/$projectId/issues"
+            to="/projects/$projectId/tickets"
             params={{ projectId: p.id }}
             className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 hover:bg-gray-50"
           >

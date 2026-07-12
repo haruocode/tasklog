@@ -4,8 +4,8 @@ import { createAuth } from "./auth";
 import type { AppEnv } from "./types";
 import { requireAuth } from "./middleware/auth";
 import { workspacesRoute } from "./routes/workspaces";
-import { issuesRoute } from "./routes/issues";
-import { issueRoute } from "./routes/issue";
+import { ticketsRoute } from "./routes/tickets";
+import { ticketRoute } from "./routes/ticket";
 import { commentsRoute } from "./routes/comments";
 import { membersRoute } from "./routes/members";
 
@@ -37,19 +37,19 @@ app.get("/api/health", async (c) => {
 
 app.route("/api/workspaces", workspacesRoute);
 
-// Project-scoped resources: /api/projects/:projectId/issues
+// Project-scoped resources: /api/projects/:projectId/tickets
 const projectsApi = new Hono<AppEnv>();
 projectsApi.use("*", requireAuth);
-projectsApi.route("/:projectId/issues", issuesRoute);
+projectsApi.route("/:projectId/tickets", ticketsRoute);
 projectsApi.route("/:projectId/members", membersRoute);
 app.route("/api/projects", projectsApi);
 
-// Issue-scoped resources: /api/issues/:issueId
-const issuesApi = new Hono<AppEnv>();
-issuesApi.use("*", requireAuth);
-issuesApi.route("/:issueId/comments", commentsRoute);
-issuesApi.route("/:issueId", issueRoute);
-app.route("/api/issues", issuesApi);
+// Ticket-scoped resources: /api/tickets/:ticketId
+const ticketsApi = new Hono<AppEnv>();
+ticketsApi.use("*", requireAuth);
+ticketsApi.route("/:ticketId/comments", commentsRoute);
+ticketsApi.route("/:ticketId", ticketRoute);
+app.route("/api/tickets", ticketsApi);
 
 // Unknown /api routes -> stable JSON 404 (matches the API error envelope).
 app.all("/api/*", (c) =>

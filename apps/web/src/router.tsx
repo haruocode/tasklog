@@ -7,8 +7,8 @@ import {
 import { HomePage } from "./pages/HomePage";
 import { WorkspacesPage } from "./pages/WorkspacesPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
-import { IssuesPage } from "./pages/IssuesPage";
-import { IssueDetailPage } from "./pages/IssueDetailPage";
+import { TicketsPage } from "./pages/TicketsPage";
+import { TicketDetailPage } from "./pages/TicketDetailPage";
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -32,24 +32,24 @@ const projectsRoute = createRoute({
   component: ProjectsPage,
 });
 
-const issuesRoute = createRoute({
+const ticketsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/projects/$projectId/issues",
-  component: IssuesPage,
+  path: "/projects/$projectId/tickets",
+  component: TicketsPage,
 });
 
-const issueDetailRoute = createRoute({
+const ticketDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/projects/$projectId/issues/$issueId",
-  component: IssueDetailPage,
+  path: "/projects/$projectId/tickets/$ticketId",
+  component: TicketDetailPage,
 });
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   workspacesRoute,
   projectsRoute,
-  issuesRoute,
-  issueDetailRoute,
+  ticketsRoute,
+  ticketDetailRoute,
 ]);
 
 export const router = createRouter({ routeTree });

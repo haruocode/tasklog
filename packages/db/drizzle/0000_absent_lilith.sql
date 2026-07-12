@@ -15,53 +15,6 @@ CREATE TABLE `accounts` (
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `issue_activities` (
-	`id` text PRIMARY KEY NOT NULL,
-	`issue_id` text NOT NULL,
-	`user_id` text NOT NULL,
-	`action` text NOT NULL,
-	`before_value` text,
-	`after_value` text,
-	`created_at` integer NOT NULL,
-	FOREIGN KEY (`issue_id`) REFERENCES `issues`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE restrict
-);
---> statement-breakpoint
-CREATE INDEX `issue_activities_issue_idx` ON `issue_activities` (`issue_id`);--> statement-breakpoint
-CREATE TABLE `issue_comments` (
-	`id` text PRIMARY KEY NOT NULL,
-	`issue_id` text NOT NULL,
-	`user_id` text NOT NULL,
-	`body` text NOT NULL,
-	`created_at` integer NOT NULL,
-	`updated_at` integer NOT NULL,
-	FOREIGN KEY (`issue_id`) REFERENCES `issues`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE restrict
-);
---> statement-breakpoint
-CREATE INDEX `issue_comments_issue_idx` ON `issue_comments` (`issue_id`);--> statement-breakpoint
-CREATE TABLE `issues` (
-	`id` text PRIMARY KEY NOT NULL,
-	`project_id` text NOT NULL,
-	`issue_number` integer NOT NULL,
-	`title` text NOT NULL,
-	`description` text,
-	`type` text DEFAULT 'TASK' NOT NULL,
-	`status` text DEFAULT 'TODO' NOT NULL,
-	`priority` text DEFAULT 'MEDIUM' NOT NULL,
-	`assignee_id` text,
-	`reporter_id` text NOT NULL,
-	`due_date` integer,
-	`created_at` integer NOT NULL,
-	`updated_at` integer NOT NULL,
-	FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`assignee_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE set null,
-	FOREIGN KEY (`reporter_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE restrict
-);
---> statement-breakpoint
-CREATE UNIQUE INDEX `issues_project_number_uq` ON `issues` (`project_id`,`issue_number`);--> statement-breakpoint
-CREATE INDEX `issues_project_status_idx` ON `issues` (`project_id`,`status`);--> statement-breakpoint
-CREATE INDEX `issues_assignee_idx` ON `issues` (`assignee_id`);--> statement-breakpoint
 CREATE TABLE `projects` (
 	`id` text PRIMARY KEY NOT NULL,
 	`workspace_id` text NOT NULL,
@@ -87,6 +40,53 @@ CREATE TABLE `sessions` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `sessions_token_unique` ON `sessions` (`token`);--> statement-breakpoint
+CREATE TABLE `ticket_activities` (
+	`id` text PRIMARY KEY NOT NULL,
+	`ticket_id` text NOT NULL,
+	`user_id` text NOT NULL,
+	`action` text NOT NULL,
+	`before_value` text,
+	`after_value` text,
+	`created_at` integer NOT NULL,
+	FOREIGN KEY (`ticket_id`) REFERENCES `tickets`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE restrict
+);
+--> statement-breakpoint
+CREATE INDEX `ticket_activities_ticket_idx` ON `ticket_activities` (`ticket_id`);--> statement-breakpoint
+CREATE TABLE `ticket_comments` (
+	`id` text PRIMARY KEY NOT NULL,
+	`ticket_id` text NOT NULL,
+	`user_id` text NOT NULL,
+	`body` text NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
+	FOREIGN KEY (`ticket_id`) REFERENCES `tickets`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE restrict
+);
+--> statement-breakpoint
+CREATE INDEX `ticket_comments_ticket_idx` ON `ticket_comments` (`ticket_id`);--> statement-breakpoint
+CREATE TABLE `tickets` (
+	`id` text PRIMARY KEY NOT NULL,
+	`project_id` text NOT NULL,
+	`ticket_number` integer NOT NULL,
+	`title` text NOT NULL,
+	`description` text,
+	`type` text DEFAULT 'TASK' NOT NULL,
+	`status` text DEFAULT 'TODO' NOT NULL,
+	`priority` text DEFAULT 'MEDIUM' NOT NULL,
+	`assignee_id` text,
+	`reporter_id` text NOT NULL,
+	`due_date` integer,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
+	FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`assignee_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`reporter_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE restrict
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `tickets_project_number_uq` ON `tickets` (`project_id`,`ticket_number`);--> statement-breakpoint
+CREATE INDEX `tickets_project_status_idx` ON `tickets` (`project_id`,`status`);--> statement-breakpoint
+CREATE INDEX `tickets_assignee_idx` ON `tickets` (`assignee_id`);--> statement-breakpoint
 CREATE TABLE `users` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,

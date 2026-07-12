@@ -3,15 +3,15 @@ import type {
   ApiSuccess,
   Comment,
   CreateCommentInput,
-  CreateIssueInput,
+  CreateTicketInput,
   CreateProjectInput,
   CreateWorkspaceInput,
-  Issue,
-  IssueDetail,
-  IssueFilters,
+  Ticket,
+  TicketDetail,
+  TicketFilters,
   Member,
   Project,
-  UpdateIssueInput,
+  UpdateTicketInput,
   Workspace,
 } from "@tasklog/shared";
 
@@ -63,36 +63,36 @@ export const createProject = (workspaceId: string, input: CreateProjectInput) =>
     body: JSON.stringify(input),
   });
 
-export const listIssues = (projectId: string, filters: IssueFilters = {}) => {
+export const listTickets = (projectId: string, filters: TicketFilters = {}) => {
   const params = new URLSearchParams();
   if (filters.status) params.set("status", filters.status);
   if (filters.priority) params.set("priority", filters.priority);
   if (filters.type) params.set("type", filters.type);
   if (filters.q) params.set("q", filters.q);
   const qs = params.toString();
-  return api<Issue[]>(`/api/projects/${projectId}/issues${qs ? `?${qs}` : ""}`);
+  return api<Ticket[]>(`/api/projects/${projectId}/tickets${qs ? `?${qs}` : ""}`);
 };
 
-export const createIssue = (projectId: string, input: CreateIssueInput) =>
-  api<Issue>(`/api/projects/${projectId}/issues`, {
+export const createTicket = (projectId: string, input: CreateTicketInput) =>
+  api<Ticket>(`/api/projects/${projectId}/tickets`, {
     method: "POST",
     body: JSON.stringify(input),
   });
 
-export const getIssue = (issueId: string) =>
-  api<IssueDetail>(`/api/issues/${issueId}`);
+export const getTicket = (ticketId: string) =>
+  api<TicketDetail>(`/api/tickets/${ticketId}`);
 
-export const updateIssue = (issueId: string, input: UpdateIssueInput) =>
-  api<IssueDetail>(`/api/issues/${issueId}`, {
+export const updateTicket = (ticketId: string, input: UpdateTicketInput) =>
+  api<TicketDetail>(`/api/tickets/${ticketId}`, {
     method: "PATCH",
     body: JSON.stringify(input),
   });
 
-export const listComments = (issueId: string) =>
-  api<Comment[]>(`/api/issues/${issueId}/comments`);
+export const listComments = (ticketId: string) =>
+  api<Comment[]>(`/api/tickets/${ticketId}/comments`);
 
-export const createComment = (issueId: string, input: CreateCommentInput) =>
-  api<Comment>(`/api/issues/${issueId}/comments`, {
+export const createComment = (ticketId: string, input: CreateCommentInput) =>
+  api<Comment>(`/api/tickets/${ticketId}/comments`, {
     method: "POST",
     body: JSON.stringify(input),
   });

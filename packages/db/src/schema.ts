@@ -1,9 +1,9 @@
 import { integer, sqliteTable, text, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 import { uuidv7 } from "uuidv7";
 import {
-  ISSUE_PRIORITIES,
-  ISSUE_STATUSES,
-  ISSUE_TYPES,
+  TICKET_PRIORITIES,
+  TICKET_STATUSES,
+  TICKET_TYPES,
   WORKSPACE_ROLES,
 } from "@tasklog/shared";
 
@@ -138,20 +138,20 @@ export const projects = sqliteTable(
   (t) => [uniqueIndex("projects_ws_key_uq").on(t.workspaceId, t.key)],
 );
 
-export const issues = sqliteTable(
-  "issues",
+export const tickets = sqliteTable(
+  "tickets",
   {
     id: id(),
     projectId: text("project_id")
       .notNull()
       .references(() => projects.id, { onDelete: "cascade" }),
     // Sequential per project; combined with projects.key -> "TASK-1".
-    issueNumber: integer("issue_number").notNull(),
+    ticketNumber: integer("ticket_number").notNull(),
     title: text("title").notNull(),
     description: text("description"),
-    type: text("type", { enum: ISSUE_TYPES }).notNull().default("TASK"),
-    status: text("status", { enum: ISSUE_STATUSES }).notNull().default("TODO"),
-    priority: text("priority", { enum: ISSUE_PRIORITIES })
+    type: text("type", { enum: TICKET_TYPES }).notNull().default("TASK"),
+    status: text("status", { enum: TICKET_STATUSES }).notNull().default("TODO"),
+    priority: text("priority", { enum: TICKET_PRIORITIES })
       .notNull()
       .default("MEDIUM"),
     assigneeId: text("assignee_id").references(() => users.id, {
@@ -165,19 +165,19 @@ export const issues = sqliteTable(
     updatedAt: updatedAt(),
   },
   (t) => [
-    uniqueIndex("issues_project_number_uq").on(t.projectId, t.issueNumber),
-    index("issues_project_status_idx").on(t.projectId, t.status),
-    index("issues_assignee_idx").on(t.assigneeId),
+    uniqueIndex("tickets_project_number_uq").on(t.projectId, t.ticketNumber),
+    index("tickets_project_status_idx").on(t.projectId, t.status),
+    index("tickets_assignee_idx").on(t.assigneeId),
   ],
 );
 
-export const issueComments = sqliteTable(
-  "issue_comments",
+export const ticketComments = sqliteTable(
+  "ticket_comments",
   {
     id: id(),
-    issueId: text("issue_id")
+    ticketId: text("ticket_id")
       .notNull()
-      .references(() => issues.id, { onDelete: "cascade" }),
+      .references(() => tickets.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
@@ -185,24 +185,24 @@ export const issueComments = sqliteTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("issue_comments_issue_idx").on(t.issueId)],
+  (t) => [index("ticket_comments_ticket_idx").on(t.ticketId)],
 );
 
-export const issueActivities = sqliteTable(
-  "issue_activities",
+export const ticketActivities = sqliteTable(
+  "ticket_activities",
   {
     id: id(),
-    issueId: text("issue_id")
+    ticketId: text("ticket_id")
       .notNull()
-      .references(() => issues.id, { onDelete: "cascade" }),
+      .references(() => tickets.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
-    // e.g. "issue.created", "status.changed", "assignee.changed"
+    // e.g. "ticket.created", "status.changed", "assignee.changed"
     action: text("action").notNull(),
     beforeValue: text("before_value"),
     afterValue: text("after_value"),
     createdAt: createdAt(),
   },
-  (t) => [index("issue_activities_issue_idx").on(t.issueId)],
+  (t) => [index("ticket_activities_ticket_idx").on(t.ticketId)],
 );

@@ -2,39 +2,39 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import {
-  ISSUE_PRIORITIES,
-  ISSUE_STATUSES,
+  TICKET_PRIORITIES,
+  TICKET_STATUSES,
   createCommentSchema,
-  type IssueDetail,
-  type UpdateIssueInput,
+  type TicketDetail,
+  type UpdateTicketInput,
 } from "@tasklog/shared";
 import { authClient } from "../lib/auth-client";
 import {
   ApiRequestError,
   createComment,
-  getIssue,
+  getTicket,
   listComments,
   listMembers,
-  updateIssue,
+  updateTicket,
 } from "../lib/api";
-import { PRIORITY_LABELS, STATUS_LABELS, TYPE_LABELS } from "../lib/issue-labels";
+import { PRIORITY_LABELS, STATUS_LABELS, TYPE_LABELS } from "../lib/ticket-labels";
 
-function CommentsSection({ issueId }: { issueId: string }) {
+function CommentsSection({ ticketId }: { ticketId: string }) {
   const queryClient = useQueryClient();
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const commentsQuery = useQuery({
-    queryKey: ["issue-comments", issueId],
-    queryFn: () => listComments(issueId),
+    queryKey: ["ticket-comments", ticketId],
+    queryFn: () => listComments(ticketId),
   });
 
   const mutation = useMutation({
-    mutationFn: (input: { body: string }) => createComment(issueId, input),
+    mutationFn: (input: { body: string }) => createComment(ticketId, input),
     onSuccess: () => {
       setBody("");
       setError(null);
-      queryClient.invalidateQueries({ queryKey: ["issue-comments", issueId] });
+      queryClient.invalidateQueries({ queryKey: ["ticket-comments", ticketId] });
     },
     onError: (e) => setError(e instanceof Error ? e.message : "投稿に失敗しました"),
   });
@@ -113,15 +113,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function IssueDetailPage() {
-  const { projectId, issueId } = useParams({ strict: false });
+export function TicketDetailPage() {
+  const { projectId, ticketId } = useParams({ strict: false });
   const { data: session, isPending } = authClient.useSession();
   const queryClient = useQueryClient();
 
-  const issueQuery = useQuery({
-    queryKey: ["issue", issueId],
-    queryFn: () => getIssue(issueId!),
-    enabled: !!session && !!issueId,
+  const ticketQuery = useQuery({
+    queryKey: ["ticket", ticketId],
+    queryFn: () => getTicket(ticketId!),
+    enabled: !!session && !!ticketId,
   });
 
   const membersQuery = useQuery({
@@ -131,11 +131,11 @@ export function IssueDetailPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: (input: UpdateIssueInput) => updateIssue(issueId!, input),
+    mutationFn: (input: UpdateTicketInput) => updateTicket(ticketId!, input),
     onSuccess: (updated) => {
-      queryClient.setQueryData<IssueDetail>(["issue", issueId], updated);
+      queryClient.setQueryData<TicketDetail>(["ticket", ticketId], updated);
       // The list shows status/priority/assignee, so refresh it too.
-      queryClient.invalidateQueries({ queryKey: ["issues", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["tickets", projectId] });
     },
   });
 
@@ -157,65 +157,65 @@ export function IssueDetailPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 p-8">
       <Link
-        to="/projects/$projectId/issues"
+        to="/projects/$projectId/tickets"
         params={{ projectId: projectId! }}
         className="text-sm text-gray-500 hover:underline"
       >
-        ← イシュー一覧
+        ← チケット一覧
       </Link>
 
-      {issueQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
-      {issueQuery.isError && (
+      {ticketQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
+      {ticketQuery.isError && (
         <p className="text-red-600">
-          {issueQuery.error instanceof ApiRequestError
-            ? issueQuery.error.message
+          {ticketQuery.error instanceof ApiRequestError
+            ? ticketQuery.error.message
             : "読み込みに失敗しました"}
         </p>
       )}
 
-      {issueQuery.data && (
+      {ticketQuery.data && (
         <article className="flex flex-col gap-6">
           <header className="flex flex-col gap-1">
             <span className="font-mono text-xs text-gray-500">
-              {issueQuery.data.key}
+              {ticketQuery.data.key}
             </span>
             <h1 className="text-2xl font-bold tracking-tight">
-              {issueQuery.data.title}
+              {ticketQuery.data.title}
             </h1>
           </header>
 
           <dl className="grid grid-cols-2 gap-4 rounded-lg border border-gray-200 p-4 sm:grid-cols-4">
             <Field label="ステータス">
               <select
-                value={issueQuery.data.status}
+                value={ticketQuery.data.status}
                 disabled={mutation.isPending}
                 onChange={(e) =>
                   mutation.mutate({
-                    status: e.target.value as IssueDetail["status"],
+                    status: e.target.value as TicketDetail["status"],
                   })
                 }
                 className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm disabled:opacity-50"
               >
-                {ISSUE_STATUSES.map((s) => (
+                {TICKET_STATUSES.map((s) => (
                   <option key={s} value={s}>
                     {STATUS_LABELS[s]}
                   </option>
                 ))}
               </select>
             </Field>
-            <Field label="種別">{TYPE_LABELS[issueQuery.data.type]}</Field>
+            <Field label="種別">{TYPE_LABELS[ticketQuery.data.type]}</Field>
             <Field label="優先度">
               <select
-                value={issueQuery.data.priority}
+                value={ticketQuery.data.priority}
                 disabled={mutation.isPending}
                 onChange={(e) =>
                   mutation.mutate({
-                    priority: e.target.value as IssueDetail["priority"],
+                    priority: e.target.value as TicketDetail["priority"],
                   })
                 }
                 className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm disabled:opacity-50"
               >
-                {ISSUE_PRIORITIES.map((p) => (
+                {TICKET_PRIORITIES.map((p) => (
                   <option key={p} value={p}>
                     {PRIORITY_LABELS[p]}
                   </option>
@@ -224,7 +224,7 @@ export function IssueDetailPage() {
             </Field>
             <Field label="担当者">
               <select
-                value={issueQuery.data.assigneeId ?? ""}
+                value={ticketQuery.data.assigneeId ?? ""}
                 disabled={mutation.isPending || membersQuery.isLoading}
                 onChange={(e) =>
                   mutation.mutate({ assigneeId: e.target.value || null })
@@ -239,7 +239,7 @@ export function IssueDetailPage() {
                 ))}
               </select>
             </Field>
-            <Field label="報告者">{issueQuery.data.reporter.name}</Field>
+            <Field label="報告者">{ticketQuery.data.reporter.name}</Field>
           </dl>
           {mutation.isError && (
             <p className="text-sm text-red-600">
@@ -251,16 +251,16 @@ export function IssueDetailPage() {
 
           <section className="flex flex-col gap-2">
             <h2 className="text-sm font-medium text-gray-500">説明</h2>
-            {issueQuery.data.description ? (
+            {ticketQuery.data.description ? (
               <p className="whitespace-pre-wrap text-sm text-gray-900">
-                {issueQuery.data.description}
+                {ticketQuery.data.description}
               </p>
             ) : (
               <p className="text-sm text-gray-400">説明はありません。</p>
             )}
           </section>
 
-          <CommentsSection issueId={issueQuery.data.id} />
+          <CommentsSection ticketId={ticketQuery.data.id} />
         </article>
       )}
     </main>

@@ -1,45 +1,45 @@
 import { Hono } from "hono";
 import { asc, eq } from "drizzle-orm";
-import { createDb, issueComments, newId, users } from "@tasklog/db";
+import { createDb, ticketComments, newId, users } from "@tasklog/db";
 import { createCommentSchema, type Comment } from "@tasklog/shared";
 import type { AppEnv } from "../types";
-import { getIssueAccess } from "../lib/authz";
+import { getTicketAccess } from "../lib/authz";
 
-// Mounted under /api/issues/:issueId/comments (see index.ts).
+// Mounted under /api/tickets/:ticketId/comments (see index.ts).
 export const commentsRoute = new Hono<AppEnv>();
 
-const ISSUE_NOT_FOUND = {
-  error: { code: "ISSUE_NOT_FOUND", message: "Issue not found" },
+const TICKET_NOT_FOUND = {
+  error: { code: "TICKET_NOT_FOUND", message: "Ticket not found" },
 } as const;
 
-// List an issue's comments, oldest first (any workspace member).
+// List a ticket's comments, oldest first (any workspace member).
 commentsRoute.get("/", async (c) => {
   const db = createDb(c.env.DB);
   const user = c.get("user");
-  const issueId = c.req.param("issueId");
-  if (!issueId) return c.json(ISSUE_NOT_FOUND, 404);
+  const ticketId = c.req.param("ticketId");
+  if (!ticketId) return c.json(TICKET_NOT_FOUND, 404);
 
-  const access = await getIssueAccess(db, issueId, user.id);
-  if (!access) return c.json(ISSUE_NOT_FOUND, 404);
+  const access = await getTicketAccess(db, ticketId, user.id);
+  if (!access) return c.json(TICKET_NOT_FOUND, 404);
 
   const rows = await db
     .select({
-      id: issueComments.id,
-      body: issueComments.body,
-      createdAt: issueComments.createdAt,
-      updatedAt: issueComments.updatedAt,
+      id: ticketComments.id,
+      body: ticketComments.body,
+      createdAt: ticketComments.createdAt,
+      updatedAt: ticketComments.updatedAt,
       authorId: users.id,
       authorName: users.name,
       authorImage: users.image,
     })
-    .from(issueComments)
-    .innerJoin(users, eq(users.id, issueComments.userId))
-    .where(eq(issueComments.issueId, issueId))
-    .orderBy(asc(issueComments.createdAt));
+    .from(ticketComments)
+    .innerJoin(users, eq(users.id, ticketComments.userId))
+    .where(eq(ticketComments.ticketId, ticketId))
+    .orderBy(asc(ticketComments.createdAt));
 
   const data: Comment[] = rows.map((r) => ({
     id: r.id,
-    issueId,
+    ticketId,
     body: r.body,
     author: { id: r.authorId, name: r.authorName, image: r.authorImage },
     createdAt: r.createdAt.toISOString(),
@@ -48,15 +48,15 @@ commentsRoute.get("/", async (c) => {
   return c.json({ data });
 });
 
-// Add a comment to an issue (any workspace member).
+// Add a comment to a ticket (any workspace member).
 commentsRoute.post("/", async (c) => {
   const db = createDb(c.env.DB);
   const user = c.get("user");
-  const issueId = c.req.param("issueId");
-  if (!issueId) return c.json(ISSUE_NOT_FOUND, 404);
+  const ticketId = c.req.param("ticketId");
+  if (!ticketId) return c.json(TICKET_NOT_FOUND, 404);
 
-  const access = await getIssueAccess(db, issueId, user.id);
-  if (!access) return c.json(ISSUE_NOT_FOUND, 404);
+  const access = await getTicketAccess(db, ticketId, user.id);
+  if (!access) return c.json(TICKET_NOT_FOUND, 404);
 
   const body = await c.req.json().catch(() => null);
   const parsed = createCommentSchema.safeParse(body);
@@ -74,9 +74,9 @@ commentsRoute.post("/", async (c) => {
 
   const id = newId();
   const now = new Date();
-  await db.insert(issueComments).values({
+  await db.insert(ticketComments).values({
     id,
-    issueId,
+    ticketId,
     userId: user.id,
     body: parsed.data.body,
     createdAt: now,
@@ -85,7 +85,7 @@ commentsRoute.post("/", async (c) => {
 
   const data: Comment = {
     id,
-    issueId,
+    ticketId,
     body: parsed.data.body,
     author: { id: user.id, name: user.name, image: user.image ?? null },
     createdAt: now.toISOString(),

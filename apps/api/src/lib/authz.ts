@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { issues, projects, workspaceMembers, type Db } from "@tasklog/db";
+import { tickets, projects, workspaceMembers, type Db } from "@tasklog/db";
 import type { WorkspaceRole } from "@tasklog/shared";
 
 export type Membership = { role: WorkspaceRole };
@@ -67,30 +67,30 @@ export async function getProjectAccess(
   };
 }
 
-export type IssueAccess = {
-  issue: typeof issues.$inferSelect;
+export type TicketAccess = {
+  ticket: typeof tickets.$inferSelect;
   workspaceId: string;
   projectKey: string;
   role: WorkspaceRole;
 };
 
-// Resolves an issue, its project key, and the caller's membership role.
-// Returns undefined when the issue does not exist OR the caller is not a member
-// of its workspace; callers treat both as ISSUE_NOT_FOUND.
-export async function getIssueAccess(
+// Resolves a ticket, its project key, and the caller's membership role.
+// Returns undefined when the ticket does not exist OR the caller is not a member
+// of its workspace; callers treat both as TICKET_NOT_FOUND.
+export async function getTicketAccess(
   db: Db,
-  issueId: string,
+  ticketId: string,
   userId: string,
-): Promise<IssueAccess | undefined> {
+): Promise<TicketAccess | undefined> {
   const [row] = await db
     .select({
-      issue: issues,
+      ticket: tickets,
       workspaceId: projects.workspaceId,
       projectKey: projects.key,
       role: workspaceMembers.role,
     })
-    .from(issues)
-    .innerJoin(projects, eq(projects.id, issues.projectId))
+    .from(tickets)
+    .innerJoin(projects, eq(projects.id, tickets.projectId))
     .innerJoin(
       workspaceMembers,
       and(
@@ -98,12 +98,12 @@ export async function getIssueAccess(
         eq(workspaceMembers.userId, userId),
       ),
     )
-    .where(eq(issues.id, issueId))
+    .where(eq(tickets.id, ticketId))
     .limit(1);
 
   if (!row) return undefined;
   return {
-    issue: row.issue,
+    ticket: row.ticket,
     workspaceId: row.workspaceId,
     projectKey: row.projectKey,
     role: row.role,
