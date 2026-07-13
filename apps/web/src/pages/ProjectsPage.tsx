@@ -40,23 +40,23 @@ function CreateProjectForm({ workspaceId }: { workspaceId: string }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="プロジェクト名"
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="flex-1 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm"
         />
         <input
           value={key}
           onChange={(e) => setKey(e.target.value.toUpperCase())}
           placeholder="キー (例: TASK)"
-          className="w-32 rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"
+          className="w-32 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 font-mono text-sm"
         />
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="shrink-0 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+          className="shrink-0 rounded-md bg-gray-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 disabled:opacity-50"
         >
           {mutation.isPending ? "作成中…" : "作成"}
         </button>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
     </form>
   );
 }
@@ -72,14 +72,14 @@ export function ProjectsPage() {
   });
 
   if (isPending) {
-    return <p className="p-8 text-gray-400">確認中…</p>;
+    return <p className="p-8 text-gray-400 dark:text-gray-500">確認中…</p>;
   }
 
   if (!session) {
     return (
       <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-4 p-8">
-        <p className="text-gray-600">ログインが必要です。</p>
-        <Link to="/" className="text-sm text-blue-600 underline">
+        <p className="text-gray-600 dark:text-gray-300">ログインが必要です。</p>
+        <Link to="/" className="text-sm text-blue-600 dark:text-blue-400 underline">
           トップへ戻ってログイン
         </Link>
       </main>
@@ -90,7 +90,7 @@ export function ProjectsPage() {
     <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-6 p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">プロジェクト</h1>
-        <Link to="/workspaces" className="text-sm text-gray-500 hover:underline">
+        <Link to="/workspaces" className="text-sm text-gray-500 dark:text-gray-400 hover:underline">
           ワークスペース一覧
         </Link>
       </div>
@@ -98,16 +98,16 @@ export function ProjectsPage() {
       <CreateProjectForm workspaceId={workspaceId!} />
 
       <section className="flex flex-col gap-2">
-        {projectsQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
+        {projectsQuery.isLoading && <p className="text-gray-400 dark:text-gray-500">読み込み中…</p>}
         {projectsQuery.isError && (
-          <p className="text-red-600">
+          <p className="text-red-600 dark:text-red-400">
             {projectsQuery.error instanceof ApiRequestError
               ? projectsQuery.error.message
               : "読み込みに失敗しました"}
           </p>
         )}
         {projectsQuery.data?.length === 0 && (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             まだプロジェクトがありません。上のフォームから作成してください。
           </p>
         )}
@@ -116,10 +116,10 @@ export function ProjectsPage() {
             key={p.id}
             to="/projects/$projectId/tickets"
             params={{ projectId: p.id }}
-            className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 hover:bg-gray-50"
+            className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-800 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             <span className="font-medium">{p.name}</span>
-            <span className="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-600">
+            <span className="rounded bg-gray-100 dark:bg-gray-800 px-2 py-0.5 font-mono text-xs text-gray-600 dark:text-gray-300">
               {p.key}
             </span>
           </Link>

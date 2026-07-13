@@ -51,32 +51,32 @@ function CommentsSection({ ticketId }: { ticketId: string }) {
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-sm font-medium text-gray-500">コメント</h2>
+      <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">コメント</h2>
 
       <div className="flex flex-col gap-3">
-        {commentsQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
+        {commentsQuery.isLoading && <p className="text-gray-400 dark:text-gray-500">読み込み中…</p>}
         {commentsQuery.isError && (
-          <p className="text-red-600">
+          <p className="text-red-600 dark:text-red-400">
             {commentsQuery.error instanceof ApiRequestError
               ? commentsQuery.error.message
               : "読み込みに失敗しました"}
           </p>
         )}
         {commentsQuery.data?.length === 0 && (
-          <p className="text-sm text-gray-400">まだコメントはありません。</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">まだコメントはありません。</p>
         )}
         {commentsQuery.data?.map((comment) => (
           <div
             key={comment.id}
-            className="flex flex-col gap-1 rounded-lg border border-gray-200 p-3"
+            className="flex flex-col gap-1 rounded-lg border border-gray-200 dark:border-gray-800 p-3"
           >
             <div className="flex items-baseline justify-between">
               <span className="text-sm font-medium">{comment.author.name}</span>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-400 dark:text-gray-500">
                 {new Date(comment.createdAt).toLocaleString("ja-JP")}
               </span>
             </div>
-            <p className="whitespace-pre-wrap text-sm text-gray-900">
+            <p className="whitespace-pre-wrap text-sm text-gray-900 dark:text-gray-100">
               {comment.body}
             </p>
           </div>
@@ -89,13 +89,13 @@ function CommentsSection({ ticketId }: { ticketId: string }) {
           onChange={(e) => setBody(e.target.value)}
           placeholder="コメントを追加…"
           rows={3}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm"
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="self-end rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+          className="self-end rounded-md bg-gray-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 disabled:opacity-50"
         >
           {mutation.isPending ? "投稿中…" : "コメント"}
         </button>
@@ -107,8 +107,8 @@ function CommentsSection({ ticketId }: { ticketId: string }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <dt className="text-xs font-medium text-gray-500">{label}</dt>
-      <dd className="text-sm text-gray-900">{children}</dd>
+      <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</dt>
+      <dd className="text-sm text-gray-900 dark:text-gray-100">{children}</dd>
     </div>
   );
 }
@@ -140,14 +140,14 @@ export function TicketDetailPage() {
   });
 
   if (isPending) {
-    return <p className="p-8 text-gray-400">確認中…</p>;
+    return <p className="p-8 text-gray-400 dark:text-gray-500">確認中…</p>;
   }
 
   if (!session) {
     return (
       <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-4 p-8">
-        <p className="text-gray-600">ログインが必要です。</p>
-        <Link to="/" className="text-sm text-blue-600 underline">
+        <p className="text-gray-600 dark:text-gray-300">ログインが必要です。</p>
+        <Link to="/" className="text-sm text-blue-600 dark:text-blue-400 underline">
           トップへ戻ってログイン
         </Link>
       </main>
@@ -159,14 +159,14 @@ export function TicketDetailPage() {
       <Link
         to="/projects/$projectId/tickets"
         params={{ projectId: projectId! }}
-        className="text-sm text-gray-500 hover:underline"
+        className="text-sm text-gray-500 dark:text-gray-400 hover:underline"
       >
         ← チケット一覧
       </Link>
 
-      {ticketQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
+      {ticketQuery.isLoading && <p className="text-gray-400 dark:text-gray-500">読み込み中…</p>}
       {ticketQuery.isError && (
-        <p className="text-red-600">
+        <p className="text-red-600 dark:text-red-400">
           {ticketQuery.error instanceof ApiRequestError
             ? ticketQuery.error.message
             : "読み込みに失敗しました"}
@@ -176,7 +176,7 @@ export function TicketDetailPage() {
       {ticketQuery.data && (
         <article className="flex flex-col gap-6">
           <header className="flex flex-col gap-1">
-            <span className="font-mono text-xs text-gray-500">
+            <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
               {ticketQuery.data.key}
             </span>
             <h1 className="text-2xl font-bold tracking-tight">
@@ -184,7 +184,7 @@ export function TicketDetailPage() {
             </h1>
           </header>
 
-          <dl className="grid grid-cols-2 gap-4 rounded-lg border border-gray-200 p-4 sm:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-4 rounded-lg border border-gray-200 dark:border-gray-800 p-4 sm:grid-cols-4">
             <Field label="ステータス">
               <select
                 value={ticketQuery.data.status}
@@ -194,7 +194,7 @@ export function TicketDetailPage() {
                     status: e.target.value as TicketDetail["status"],
                   })
                 }
-                className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm disabled:opacity-50"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-2 py-1 text-sm disabled:opacity-50"
               >
                 {TICKET_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -213,7 +213,7 @@ export function TicketDetailPage() {
                     priority: e.target.value as TicketDetail["priority"],
                   })
                 }
-                className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm disabled:opacity-50"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-2 py-1 text-sm disabled:opacity-50"
               >
                 {TICKET_PRIORITIES.map((p) => (
                   <option key={p} value={p}>
@@ -229,7 +229,7 @@ export function TicketDetailPage() {
                 onChange={(e) =>
                   mutation.mutate({ assigneeId: e.target.value || null })
                 }
-                className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm disabled:opacity-50"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-2 py-1 text-sm disabled:opacity-50"
               >
                 <option value="">未割り当て</option>
                 {membersQuery.data?.map((m) => (
@@ -242,7 +242,7 @@ export function TicketDetailPage() {
             <Field label="報告者">{ticketQuery.data.reporter.name}</Field>
           </dl>
           {mutation.isError && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-red-600 dark:text-red-400">
               {mutation.error instanceof ApiRequestError
                 ? mutation.error.message
                 : "更新に失敗しました"}
@@ -250,13 +250,13 @@ export function TicketDetailPage() {
           )}
 
           <section className="flex flex-col gap-2">
-            <h2 className="text-sm font-medium text-gray-500">説明</h2>
+            <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">説明</h2>
             {ticketQuery.data.description ? (
-              <p className="whitespace-pre-wrap text-sm text-gray-900">
+              <p className="whitespace-pre-wrap text-sm text-gray-900 dark:text-gray-100">
                 {ticketQuery.data.description}
               </p>
             ) : (
-              <p className="text-sm text-gray-400">説明はありません。</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">説明はありません。</p>
             )}
           </section>
 

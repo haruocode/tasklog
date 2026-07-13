@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { router } from "./router";
+import { ThemeToggle } from "./components/ThemeToggle";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -13,6 +14,7 @@ if (!rootEl) throw new Error("#root not found");
 createRoot(rootEl).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
+      <ThemeToggle />
       <RouterProvider router={router} />
     </QueryClientProvider>
   </StrictMode>,

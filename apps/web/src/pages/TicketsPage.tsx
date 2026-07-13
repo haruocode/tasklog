@@ -51,12 +51,12 @@ function CreateTicketForm({ projectId }: { projectId: string }) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="チケットのタイトル"
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="flex-1 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm"
         />
         <select
           value={type}
           onChange={(e) => setType(e.target.value as TicketType)}
-          className="rounded-md border border-gray-300 px-2 py-2 text-sm"
+          className="rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-2 py-2 text-sm"
         >
           {TICKET_TYPES.map((t) => (
             <option key={t} value={t}>
@@ -67,7 +67,7 @@ function CreateTicketForm({ projectId }: { projectId: string }) {
         <select
           value={priority}
           onChange={(e) => setPriority(e.target.value as TicketPriority)}
-          className="rounded-md border border-gray-300 px-2 py-2 text-sm"
+          className="rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-2 py-2 text-sm"
         >
           {TICKET_PRIORITIES.map((p) => (
             <option key={p} value={p}>
@@ -78,12 +78,12 @@ function CreateTicketForm({ projectId }: { projectId: string }) {
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="shrink-0 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+          className="shrink-0 rounded-md bg-gray-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 disabled:opacity-50"
         >
           {mutation.isPending ? "作成中…" : "作成"}
         </button>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
     </form>
   );
 }
@@ -131,14 +131,14 @@ export function TicketsPage() {
   const memberName = new Map(membersQuery.data?.map((m) => [m.id, m.name]));
 
   if (isPending) {
-    return <p className="p-8 text-gray-400">確認中…</p>;
+    return <p className="p-8 text-gray-400 dark:text-gray-500">確認中…</p>;
   }
 
   if (!session) {
     return (
       <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-4 p-8">
-        <p className="text-gray-600">ログインが必要です。</p>
-        <Link to="/" className="text-sm text-blue-600 underline">
+        <p className="text-gray-600 dark:text-gray-300">ログインが必要です。</p>
+        <Link to="/" className="text-sm text-blue-600 dark:text-blue-400 underline">
           トップへ戻ってログイン
         </Link>
       </main>
@@ -149,7 +149,7 @@ export function TicketsPage() {
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">チケット</h1>
-        <Link to="/workspaces" className="text-sm text-gray-500 hover:underline">
+        <Link to="/workspaces" className="text-sm text-gray-500 dark:text-gray-400 hover:underline">
           ワークスペース一覧
         </Link>
       </div>
@@ -161,12 +161,12 @@ export function TicketsPage() {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           placeholder="タイトルで検索…"
-          className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          className="flex-1 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-3 py-1.5 text-sm"
         />
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as typeof status)}
-          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+          className="rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-2 py-1.5 text-sm"
         >
           <option value={ALL}>全ステータス</option>
           {TICKET_STATUSES.map((s) => (
@@ -178,7 +178,7 @@ export function TicketsPage() {
         <select
           value={priority}
           onChange={(e) => setPriority(e.target.value as typeof priority)}
-          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+          className="rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-2 py-1.5 text-sm"
         >
           <option value={ALL}>全優先度</option>
           {TICKET_PRIORITIES.map((p) => (
@@ -190,7 +190,7 @@ export function TicketsPage() {
         <select
           value={type}
           onChange={(e) => setType(e.target.value as typeof type)}
-          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+          className="rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-2 py-1.5 text-sm"
         >
           <option value={ALL}>全種別</option>
           {TICKET_TYPES.map((t) => (
@@ -202,7 +202,7 @@ export function TicketsPage() {
         <select
           value={assigneeId}
           onChange={(e) => setAssigneeId(e.target.value)}
-          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+          className="rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-900 px-2 py-1.5 text-sm"
         >
           <option value="">全担当者</option>
           {membersQuery.data?.map((m) => (
@@ -214,16 +214,16 @@ export function TicketsPage() {
       </div>
 
       <section className="flex flex-col gap-2">
-        {ticketsQuery.isLoading && <p className="text-gray-400">読み込み中…</p>}
+        {ticketsQuery.isLoading && <p className="text-gray-400 dark:text-gray-500">読み込み中…</p>}
         {ticketsQuery.isError && (
-          <p className="text-red-600">
+          <p className="text-red-600 dark:text-red-400">
             {ticketsQuery.error instanceof ApiRequestError
               ? ticketsQuery.error.message
               : "読み込みに失敗しました"}
           </p>
         )}
         {ticketsQuery.data?.length === 0 && (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {status || priority || type || assigneeId || debouncedKeyword
               ? "条件に一致するチケットがありません。"
               : "まだチケットがありません。上のフォームから作成してください。"}
@@ -232,7 +232,7 @@ export function TicketsPage() {
         {ticketsQuery.data && ticketsQuery.data.length > 0 && (
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-left text-gray-500">
+              <tr className="border-b border-gray-200 dark:border-gray-800 text-left text-gray-500 dark:text-gray-400">
                 <th className="py-2 pr-3 font-medium">キー</th>
                 <th className="py-2 pr-3 font-medium">タイトル</th>
                 <th className="py-2 pr-3 font-medium">種別</th>
@@ -243,31 +243,31 @@ export function TicketsPage() {
             </thead>
             <tbody>
               {ticketsQuery.data.map((ticket) => (
-                <tr key={ticket.id} className="border-b border-gray-100">
+                <tr key={ticket.id} className="border-b border-gray-100 dark:border-gray-800">
                   <td className="py-2 pr-3 font-mono text-xs">
                     <Link
                       to="/projects/$projectId/tickets/$ticketId"
                       params={{ projectId: projectId!, ticketId: ticket.id }}
-                      className="text-blue-600 hover:underline"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       {ticket.key}
                     </Link>
                   </td>
                   <td className="py-2 pr-3 font-medium">{ticket.title}</td>
-                  <td className="py-2 pr-3 text-gray-600">
+                  <td className="py-2 pr-3 text-gray-600 dark:text-gray-300">
                     {TYPE_LABELS[ticket.type]}
                   </td>
-                  <td className="py-2 pr-3 text-gray-600">
+                  <td className="py-2 pr-3 text-gray-600 dark:text-gray-300">
                     {PRIORITY_LABELS[ticket.priority]}
                   </td>
-                  <td className="py-2 pr-3 text-gray-600">
+                  <td className="py-2 pr-3 text-gray-600 dark:text-gray-300">
                     {ticket.assigneeId ? (
                       (memberName.get(ticket.assigneeId) ?? "—")
                     ) : (
-                      <span className="text-gray-400">未割り当て</span>
+                      <span className="text-gray-400 dark:text-gray-500">未割り当て</span>
                     )}
                   </td>
-                  <td className="py-2 text-gray-600">
+                  <td className="py-2 text-gray-600 dark:text-gray-300">
                     {STATUS_LABELS[ticket.status]}
                   </td>
                 </tr>
